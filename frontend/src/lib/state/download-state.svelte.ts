@@ -12,7 +12,7 @@ import {
 
 export const createDownloadState = () => {
 	let downloads = $state<Download[]>([]);
-	let url = $state<string>('https://1fichier.com/?tqz6yz5fcm1pz1tnuzh8');
+	let url = $state<string>('');
 	let type = $state<DownloadType>(DownloadType.MOVIE);
 
 	const createState = useAsyncState<Download, CreateDownloadInput>(
