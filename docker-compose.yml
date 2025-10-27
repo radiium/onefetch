@@ -1,0 +1,10 @@
+services:
+  onefetch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/app/data
+      - ./downloads:/app/downloads
+    ports:
+      - "3030:3000"

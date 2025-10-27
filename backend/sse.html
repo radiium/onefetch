@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Server-Sent Events</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      #messages {
+        border: 1px solid #ccc;
+        padding: 15px;
+        height: 400px;
+        overflow-y: auto;
+        background: #f5f5f5;
+      }
+      .message {
+        padding: 5px;
+        margin: 5px 0;
+        background: white;
+        border-left: 3px solid #007bff;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 10px 5px;
+        cursor: pointer;
+      }
+      #status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .connected {
+        background: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test Server-Sent Events</h1>
+
+    <div id="status" class="disconnected">Déconnecté</div>
+
+    <div>
+      <button onclick="connectSSE()">Se connecter</button>
+      <button onclick="disconnect()">Se déconnecter</button>
+      <button onclick="clearMessages()">Effacer</button>
+    </div>
+
+    <h2>Messages reçus :</h2>
+    <div id="messages"></div>
+
+    <script>
+      let eventSource = null;
+      const messagesDiv = document.getElementById("messages");
+      const statusDiv = document.getElementById("status");
+
+      function connectSSE() {
+        if (eventSource) {
+          disconnect();
+        }
+
+        // Remplacez '/events' par votre endpoint SSE
+        // eventSource = new EventSource("http://localhost:3000/api/downloads/streams");
+        eventSource = new EventSource(
+          "http://localhost:3000/sse/downloads/active/all"
+        );
+
+        eventSource.onopen = function () {
+          console.log("onopen");
+          statusDiv.textContent = "Connecté";
+          statusDiv.className = "connected";
+          addMessage("Connexion établie", "info");
+        };
+
+        eventSource.onmessage = function (event) {
+          console.log("onmessage", event);
+          addMessage(event.data, "message");
+        };
+
+        eventSource.onerror = function (error) {
+          console.warn("onerror", error);
+          statusDiv.textContent = "Erreur de connexion";
+          statusDiv.className = "disconnected";
+          addMessage("Erreur: " + JSON.stringify(error), "error");
+        };
+
+        // Écouteur pour des événements nommés (optionnel)
+        eventSource.addEventListener("custom", function (event) {
+          console.log("custom", event);
+          addMessage("Événement custom: " + event.data, "custom");
+        });
+      }
+
+      function disconnect() {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+          statusDiv.textContent = "Déconnecté";
+          statusDiv.className = "disconnected";
+          addMessage("Connexion fermée", "info");
+        }
+      }
+
+      function addMessage(text, type) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message";
+        const time = new Date().toLocaleTimeString();
+        messageDiv.textContent = `[${time}] ${text}`;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      function clearMessages() {
+        messagesDiv.innerHTML = "";
+      }
+    </script>
+  </body>
+</html>

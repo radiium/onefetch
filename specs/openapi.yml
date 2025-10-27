@@ -1,0 +1,523 @@
+openapi: 3.0.3
+info:
+  title: DL Manager
+  description: API de gestion de téléchargements depuis 1fichier.com
+  version: "1"
+  
+servers:
+  - url: /api
+    description: API Server
+
+tags:
+  - name: Settings
+    description: App settings
+  - name: Downloads
+    description: Downloads made in the application
+
+paths:
+  /settings:
+    get:
+      tags:
+        - Settings
+      summary: Get settings
+      description: Get settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    patch:
+      tags:
+        - Settings
+      summary: Update settings
+      description: Update settings
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /downloads:
+    post:
+      tags:
+        - Downloads
+      summary: Create and start a download
+      description: Create and start a download
+      operationId: createDownload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDownloadRequest'
+      responses:
+        '201':
+          description: Download created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    get:
+      tags:
+        - Downloads
+      summary: List of downloads with pagination, filters and sorting
+      description: List of downloads with pagination, filters and sorting
+      operationId: listDownloads
+      parameters:
+        - name: status
+          in: query
+          description: Filter by download status
+          required: false
+          schema:
+            $ref: '#/components/schemas/DownloadStatus'
+        - name: type
+          in: query
+          description: Filter by download type
+          required: false
+          schema:
+            $ref: '#/components/schemas/DownloadType'
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Downloads retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadPage'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /downloads/streams:
+    get:
+      tags:
+        - Downloads
+      summary: Server sent event of active downloads
+      description: Server sent event of active downloads
+      operationId: streamDownloads
+      responses:
+        '200':
+          description: SSE stream of download progress events
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DownloadProgressEvent'
+
+  /downloads/{id}/pause:
+    post:
+      tags:
+        - Downloads
+      summary: Pause a download
+      description: Pause a download
+      operationId: pauseDownload
+      parameters:
+        - name: id
+          in: path
+          description: Download ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download paused successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Download not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /downloads/{id}/resume:
+    post:
+      tags:
+        - Downloads
+      summary: Resume a download
+      description: Resume a download
+      operationId: resumeDownload
+      parameters:
+        - name: id
+          in: path
+          description: Download ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download resumed successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Download not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /downloads/{id}/archive:
+    post:
+      tags:
+        - Downloads
+      summary: Archive a download
+      description: Archive a download
+      operationId: archiveDownload
+      parameters:
+        - name: id
+          in: path
+          description: Download ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download archived successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Download not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    DownloadStatus:
+      type: string
+      enum:
+        - PENDING
+        - REQUESTING
+        - DOWNLOADING
+        - PAUSED
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+      description: Download status
+    
+    DownloadType:
+      type: string
+      enum:
+        - MOVIE
+        - TVSHOW
+      description: Type of downloaded content
+    
+    Settings:
+      type: object
+      required:
+        - apiKey
+        - downloadPath
+      properties:
+        apiKey:
+          type: string
+          description: 1fichier.com API key
+        downloadPath:
+          type: string
+          description: Local path where files will be downloaded
+    
+    CreateDownloadRequest:
+      type: object
+      required:
+        - url
+        - type
+      properties:
+        url:
+          type: string
+          description: URL to download
+        type:
+          $ref: '#/components/schemas/DownloadType'
+    
+    Download:
+      type: object
+      required:
+        - id
+        - fileUrl
+        - fileId
+        - fileName
+        - type
+        - status
+        - progress
+        - downloadedBytes
+        - downloadPath
+        - createdAt
+        - updatedAt
+        - retryCount
+      properties:
+        id:
+          type: string
+          description: Unique download identifier
+        fileUrl:
+          type: string
+          description: Original file URL
+        fileId:
+          type: string
+          description: 1fichier file ID
+        fileName:
+          type: string
+          description: Name of the file
+        fileSize:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total file size in bytes
+        mimeType:
+          type: string
+          nullable: true
+          description: MIME type of the file
+        checksum:
+          type: string
+          nullable: true
+          description: File checksum
+        type:
+          $ref: '#/components/schemas/DownloadType'
+        directDownloadUrl:
+          type: string
+          nullable: true
+          description: Direct download URL from 1fichier
+        directUrlExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiration date of the direct download URL
+        status:
+          $ref: '#/components/schemas/DownloadStatus'
+        progress:
+          type: number
+          format: double
+          description: Download progress (0-100)
+        downloadedBytes:
+          type: integer
+          format: int64
+          description: Number of bytes downloaded
+        speed:
+          type: number
+          format: double
+          nullable: true
+          description: Download speed in bytes per second
+        downloadPath:
+          type: string
+          description: Final path where the file will be saved
+        tempPath:
+          type: string
+          nullable: true
+          description: Temporary path during download
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Download start timestamp
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Download completion timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if download failed
+        retryCount:
+          type: integer
+          description: Number of retry attempts
+    
+    DownloadProgressEvent:
+      type: object
+      required:
+        - downloadId
+        - fileName
+        - status
+        - progress
+        - downloadedBytes
+      properties:
+        downloadId:
+          type: string
+          description: Download identifier
+        fileName:
+          type: string
+          description: Name of the file being downloaded
+        status:
+          $ref: '#/components/schemas/DownloadStatus'
+        progress:
+          type: number
+          format: double
+          description: Download progress (0-100)
+        downloadedBytes:
+          type: string
+          description: Number of bytes downloaded (represented as string to support large integers)
+        fileSize:
+          type: string
+          nullable: true
+          description: Total file size in bytes (represented as string to support large integers)
+        speed:
+          type: number
+          format: double
+          nullable: true
+          description: Download speed in bytes per second
+    
+    DownloadQueryParams:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/DownloadStatus'
+        type:
+          $ref: '#/components/schemas/DownloadType'
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+    
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        total:
+          type: integer
+          description: Total number of items
+        totalPages:
+          type: integer
+          description: Total number of pages
+    
+    DownloadPage:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Download'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message describing what went wrong
+        code:
+          type: string
+          description: Optional error code for programmatic error handling
