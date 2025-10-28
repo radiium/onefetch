@@ -1,8 +1,6 @@
 services:
   onefetch:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: radiium/onefetch:latest
     volumes:
       - ./data:/app/data
       - ./downloads:/app/downloads

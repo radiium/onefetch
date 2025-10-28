@@ -16,12 +16,11 @@ The sole purpose of this application is to be able to download files directly fr
 ```yml
 services:
   onefetch:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: radiium/onefetch:latest
     volumes:
       - ./data:/app/data # App data folder (db and logs)
       - ./downloads:/app/downloads # Downloaded files
     ports:
       - "3000:3000"
 ```
+
