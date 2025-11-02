@@ -12,6 +12,7 @@ type FileManager interface {
 	WriteTempFileWithContext(ctx context.Context, src io.ReadCloser, tempPath string, progressCallback func(int64)) error
 	MoveFile(src, dst string) error
 	RemoveFile(path string) error
+	GetDirectories(path string) ([]string, error)
 }
 
 type fileManager struct{}
@@ -49,6 +50,24 @@ func (fm *fileManager) MoveFile(src, dst string) error {
 
 func (fm *fileManager) RemoveFile(path string) error {
 	return os.Remove(path)
+}
+
+// GetDirectories retourne la liste des dossiers dans le chemin spécifié
+func (fm *fileManager) GetDirectories(path string) ([]string, error) {
+	var directories []string
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			directories = append(directories, entry.Name())
+		}
+	}
+
+	return directories, nil
 }
 
 func (fm *fileManager) copyWithContext(ctx context.Context, dst io.Writer, src io.Reader, callback func(int64)) error {

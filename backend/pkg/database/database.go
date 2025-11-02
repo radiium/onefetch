@@ -34,8 +34,9 @@ func New(cfg *config.Config) (*Database, error) {
 	db.Model(&model.Settings{}).Count(&count)
 	if count == 0 {
 		db.Create(&model.Settings{
-			APIKey:       "",
-			DownloadPath: cfg.DLPath,
+			APIKey1fichier: "",
+			APIKeyJellyfin: "",
+			DownloadPath:   cfg.DLPath,
 		})
 	}
 

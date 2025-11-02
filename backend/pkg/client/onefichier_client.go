@@ -20,13 +20,6 @@ type oneFichierClient struct {
 	client *http.Client
 }
 
-// func NewOneFichierClient(apiKey string) OneFichierClient {
-// 	return &oneFichierClient{
-// 		apiKey: apiKey,
-// 		client: &http.Client{Timeout: 30 * time.Second},
-// 	}
-// }
-
 func NewOneFichierClient(apiKey string) OneFichierClient {
 	return &oneFichierClient{
 		apiKey: apiKey,
