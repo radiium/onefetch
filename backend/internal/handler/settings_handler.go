@@ -35,8 +35,11 @@ func (h *settingsHandler) UpdateSettings(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	if settings.APIKey == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "APIKey are required")
+	if settings.APIKey1fichier == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "APIKey1fichier are required")
+	}
+	if settings.APIKeyJellyfin == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "APIKeyJellyfin are required")
 	}
 
 	updated, err := h.service.UpdateSettings(&settings)
