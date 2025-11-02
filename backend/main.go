@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"dlbackend/internal/model"
 	"dlbackend/internal/route"
 	"dlbackend/internal/utils"
 	"dlbackend/pkg/config"
@@ -9,6 +10,7 @@ import (
 	"dlbackend/pkg/sse"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -19,6 +21,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
+
+func initDir(path string) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0755); err != nil {
+			log.Fatalf("Failed to create directory: %s %v", path, err)
+		}
+	}
+}
 
 func main() {
 	// Load configuration
@@ -34,11 +44,10 @@ func main() {
 	app.Use(cors.New())
 
 	// Initialize data directory
-	if _, err := os.Stat(cfg.DataPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(cfg.DataPath, 0755); err != nil {
-			log.Fatalf("Failed to create data directory: %v", err)
-		}
-	}
+	initDir(cfg.DataPath)
+	initDir(cfg.DLPath)
+	initDir(filepath.Join(cfg.DLPath, model.TypeMovie.Dir()))
+	initDir(filepath.Join(cfg.DLPath, model.TypeSerie.Dir()))
 
 	// Initialize database
 	db, err := database.New(cfg)
