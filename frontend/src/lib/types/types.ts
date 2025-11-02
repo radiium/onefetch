@@ -10,7 +10,7 @@ export enum DownloadStatus {
 
 export enum DownloadType {
 	MOVIE = 'MOVIE',
-	TVSHOW = 'TVSHOW'
+	SERIE = 'SERIE'
 }
 
 export interface Download {
@@ -28,6 +28,7 @@ export interface Download {
 	startedAt?: string;
 	UpdatedAt: string;
 	completedAt?: string;
+	isAchived: boolean;
 }
 
 export interface Pagination {
@@ -67,11 +68,24 @@ export interface CreateDownloadInput {
 }
 
 export interface Settings {
-	apiKey: string;
+	apiKey1fichier: string;
+	apiKeyJellyfin: string;
 	downloadPath: string;
 }
 
-export type CallbackEmpty = () => void;
-export type CallbackError = (error?: unknown) => void;
-export type CallbackProgress = (data: DownloadProgressEvent) => void;
-export type Callback = CallbackEmpty | CallbackError | CallbackProgress;
+export interface Fileinfo {
+	url: string;
+	filename: string;
+	size: number;
+	checksum: string;
+	'content-type': string;
+	description: string;
+	pass: number;
+	path: string;
+	folder_id: string;
+}
+
+export interface FileinfoResponse {
+	fileinfo: Fileinfo;
+	directories: Record<DownloadType, string[]>;
+}

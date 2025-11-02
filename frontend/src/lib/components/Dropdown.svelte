@@ -48,7 +48,7 @@
 <Floating
 	size="1"
 	variant="outline"
-	placement="bottom"
+	placement="bottom-start"
 	offset={4}
 	autoUpdate
 	flip
@@ -57,11 +57,11 @@
 	bind:isOpen
 >
 	{#snippet trigger()}
-		<Button variant="outline" {...buttonProps} onclick={() => (isOpen = true)}>
-			<Flexbox gap="2">
+		<Button size="3" variant="outline" {...buttonProps} onclick={() => (isOpen = !isOpen)}>
+			<Flexbox gap="2" align="center" class="pl-1">
 				{@render buttonContent?.()}
 				{#if valueCount > 0}
-					<Badge size="1" variant="outline" radius="full">{valueCount}</Badge>
+					<Badge size="1" variant="outline">{valueCount}</Badge>
 				{/if}
 
 				<CaretDown />
@@ -72,6 +72,7 @@
 		<Flexbox direction="column" align="center">
 			{#each options as opt}
 				<Button
+					size="3"
 					variant="clear"
 					align="start"
 					fullWidth
@@ -79,8 +80,8 @@
 					onclick={() => select(opt)}
 					style="--button-background-hover: var(--accent-5);"
 				>
-					<Flexbox gap="2">
-						<Checkbox tabindex={-1} checked={value?.includes(opt)} />
+					<Flexbox gap="2" align="center">
+						<Checkbox size="3" tabindex={-1} checked={value?.includes(opt)} />
 						{opt}
 					</Flexbox>
 				</Button>
@@ -88,7 +89,9 @@
 
 			{#if valueCount > 0}
 				<Separator size="4" class="my-1" />
-				<Button variant="clear" fullWidth onclick={() => (value = null)}>Reset filter</Button>
+				<Button size="3" variant="clear" fullWidth onclick={() => (value = [])}>
+					Reset filter
+				</Button>
 			{/if}
 		</Flexbox>
 	{/snippet}

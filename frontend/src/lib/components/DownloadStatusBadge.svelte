@@ -19,7 +19,7 @@
 			<Badge
 				variant="soft"
 				size="3"
-				color={statusColor(dl.status)}
+				color={statusColor[dl.status]}
 				onmouseenter={() => (isOpen = true)}
 				onmouseleave={() => (isOpen = false)}
 			>
@@ -35,7 +35,7 @@
 		{/snippet}
 	</Floating>
 {:else}
-	<Badge variant="soft" size="3" color={statusColor(dl.status)} style="">
+	<Badge variant="soft" size="3" color={statusColor[dl.status]} style="">
 		{dl.status}
 	</Badge>
 {/if}

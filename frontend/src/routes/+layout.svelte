@@ -3,16 +3,18 @@
 	import Archive from 'phosphor-svelte/lib/Archive';
 	import BoxArrowDown from 'phosphor-svelte/lib/BoxArrowDown';
 	import Gear from 'phosphor-svelte/lib/Gear';
+	import Plus from 'phosphor-svelte/lib/Plus';
 	import IconContext from 'phosphor-svelte/lib/IconContext';
-	import { Flexbox, Text, ThemeRootProvider } from 'svxui';
+	import { Button, Flexbox, Separator, Text, ThemeRootProvider } from 'svxui';
 	import 'svxui/normalize.css';
 	import 'svxui/tokens.css';
 	import 'svxui/utilities.css';
+	import { goto } from '$app/navigation';
 
 	let { children } = $props();
 </script>
 
-<IconContext values={{ size: '1rem' }}>
+<IconContext values={{ size: '1.4rem' }}>
 	<ThemeRootProvider>
 		<div class="container">
 			<aside>
@@ -24,18 +26,34 @@
 					</Flexbox>
 				</Flexbox>
 
-				<NavButton route="/" title="Download">
-					<BoxArrowDown />
+				<Button
+					fullWidth
+					size="2"
+					variant="solid"
+					title="New"
+					class="w-100 py-1"
+					onclick={() => {
+						goto('/');
+					}}
+				>
+					<Plus size="1.2rem" />
+					<span>New task</span>
+				</Button>
+
+				<Separator size="4" class="my-4" />
+
+				<NavButton route="/download" title="Download">
+					<BoxArrowDown size="1.2rem" />
 					<span>Download</span>
 				</NavButton>
 
 				<NavButton route="/history" title="History">
-					<Archive />
+					<Archive size="1.2rem" />
 					<span>History</span>
 				</NavButton>
 
 				<NavButton route="/settings" title="Settings">
-					<Gear />
+					<Gear size="1.2rem" />
 					<span>Settings</span>
 				</NavButton>
 			</aside>

@@ -3,14 +3,17 @@ import { useAsyncState } from '$lib/api/use-async-state.svelte';
 import type { Settings } from '$lib/types/types';
 
 export const createSettingsState = () => {
-	let apiKey = $state<string>('');
 	let settings = $state<Settings | null>(null);
+	let form = $state<Partial<Settings>>({
+		apiKey1fichier: '',
+		apiKeyJellyfin: ''
+	});
 
 	const asyncStateOptions = {
 		immediate: false,
 		onSuccess(value: Settings): void {
 			settings = value;
-			apiKey = value.apiKey ?? apiKey;
+			form = { ...value };
 		}
 	};
 
@@ -24,14 +27,28 @@ export const createSettingsState = () => {
 	);
 
 	return {
-		get apiKey() {
-			return apiKey;
+		// API Key 1fichier
+		get apiKey1fichier() {
+			return form.apiKey1fichier;
 		},
-		set apiKey(value) {
-			apiKey = value;
+		set apiKey1fichier(value) {
+			form.apiKey1fichier = value;
 		},
+		// API Key Jellyfin
+		get apiKeyJellyfin() {
+			return form.apiKeyJellyfin;
+		},
+		set apiKeyJellyfin(value) {
+			form.apiKeyJellyfin = value;
+		},
+		// States
 		get disabled() {
-			return !apiKey || apiKey === settings?.apiKey;
+			return (
+				!form.apiKey1fichier ||
+				!form.apiKeyJellyfin ||
+				(settings?.apiKey1fichier === form.apiKey1fichier &&
+					settings?.apiKeyJellyfin === form.apiKeyJellyfin)
+			);
 		},
 		get loading() {
 			return getState.loading || updateState.loading;
@@ -43,7 +60,7 @@ export const createSettingsState = () => {
 			getState.execute();
 		},
 		update() {
-			updateState.execute({ apiKey });
+			updateState.execute($state.snapshot(form));
 		}
 	};
 };

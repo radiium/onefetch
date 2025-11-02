@@ -1,299 +1,154 @@
 <script lang="ts">
-	import EmptyState from '$lib/components/EmptyState.svelte';
 	import PageLayout from '$lib/components/PageLayout.svelte';
-	import ProgressBar from '$lib/components/ProgressBar.svelte';
-	import { createDownloadState } from '$lib/state/download-state.svelte';
-	import { DownloadStatus, DownloadType } from '$lib/types/types';
+	import SelectDirectory from '$lib/components/SelectDirectory.svelte';
+	import { createNewState } from '$lib/state/new-state.svelte';
+	import { DownloadType } from '$lib/types/types';
+	import { useClipboard } from '$lib/utils/clipboard.svelte';
 	import { formatBytes } from '$lib/utils/format-bytes';
-	import { formatProgress } from '$lib/utils/format-progress';
-	import { formatRemainingTime } from '$lib/utils/format-remaining-time';
-	import { statusColor } from '$lib/utils/status-color';
-	import { typeIcons } from '$lib/utils/type-icons';
-	import DownloadSimple from 'phosphor-svelte/lib/DownloadSimple';
-	import Pause from 'phosphor-svelte/lib/Pause';
+	import Database from 'phosphor-svelte/lib/Database';
+	import FileArrowDown from 'phosphor-svelte/lib/FileArrowDown';
 	import Play from 'phosphor-svelte/lib/Play';
-	import Plus from 'phosphor-svelte/lib/Plus';
-	import X from 'phosphor-svelte/lib/X';
-	import { onMount } from 'svelte';
-	import { Badge, Button, Dialog, Flexbox, Input, Panel, Radio, Text } from 'svxui';
+	import Folder from 'phosphor-svelte/lib/Folder';
 
-	let isOpen = $state(false);
-	const downloadState = createDownloadState();
-	onMount(downloadState.start);
+	import { Button, Flexbox, Input, InputGroup, Panel, Select, Separator, Text } from 'svxui';
+
+	const id = $props.id();
+	const newState = createNewState();
+	const clipboard = useClipboard();
 </script>
 
-<PageLayout title="Download" error={downloadState.error}>
-	{#snippet buttons()}
-		<Button size="2" onclick={() => (isOpen = true)}>
-			<Plus weight="bold" />
-			new
-		</Button>
+<PageLayout title="New task">
+	<Flexbox direction="column" gap="6">
+		<!-- Url -->
+		<Flexbox gap="4" align="center" as="label">
+			<Input
+				id="url-{id}"
+				name="url"
+				size="3"
+				fullWidth
+				placeholder="Type 1fichier.com URL..."
+				bind:value={newState.url}
+				onfocus={async () => {
+					const url = ((await clipboard.read()) ?? '').trim();
+					if (newState.isValid1FichierUrl(url)) {
+						newState.url = url;
+					}
+				}}
+			/>
+		</Flexbox>
 
-		<Dialog bind:isOpen width="560px" maxWidth="90%" style="overflow: hidden;">
-			<Flexbox direction="column" gap="6" as="form">
-				<!-- Header -->
-				<Flexbox as="header" justify="center">
-					<h2 class="m-0">New download</h2>
-				</Flexbox>
-
-				<!-- Form content -->
-				<table class="form">
-					<tbody>
-						<tr>
-							<td>Type</td>
-							<td>
-								<Flexbox gap="4">
-									{#each Object.values(DownloadType) as type (type)}
-										<Panel
-											as="label"
-											size="2"
-											class="flex-auto"
-											variant={downloadState.type === type ? 'solid' : 'outline'}
-										>
-											<Flexbox gap="3" align="center">
-												<Radio name="radio" value={type} bind:group={downloadState.type} />
-												{@const Icon = typeIcons[type]}
-												<Icon />
-
-												{type}
-											</Flexbox>
-										</Panel>
-									{/each}
-								</Flexbox>
-							</td>
-						</tr>
-
-						<tr>
-							<td>Url</td>
-							<td>
-								<Input
-									size="3"
-									fullWidth
-									name="url"
-									placeholder="Url"
-									bind:value={downloadState.url}
-									disabled={downloadState.loading}
-								/>
-							</td>
-						</tr>
-
-						<tr>
-							<td>Rename</td>
-							<td>
-								<Input
-									size="3"
-									fullWidth
-									name="rename"
-									placeholder="Rename"
-									disabled={downloadState.loading}
-								/>
-							</td>
-						</tr>
-
-						<tr>
-							<td>Location</td>
-							<td>
-								<Input
-									size="3"
-									fullWidth
-									name="location"
-									placeholder="Location"
-									disabled={downloadState.loading}
-								/>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-
-				<!-- Footer -->
-				<Flexbox as="footer" justify="end" gap="4">
-					<Button
-						size="3"
-						variant="clear"
-						disabled={downloadState.loading}
-						onclick={() => (isOpen = false)}
-					>
-						Cancel
-					</Button>
-
-					<Button
-						size="3"
-						disabled={downloadState.loading}
-						onclick={() => {
-							isOpen = false;
-							downloadState.create();
-						}}
-					>
-						<DownloadSimple weight="bold" />
-						Download
-					</Button>
-				</Flexbox>
-			</Flexbox>
-		</Dialog>
-	{/snippet}
-
-	{#if downloadState.downloads?.length > 0}
-		<Flexbox direction="column" gap="4">
-			{#each downloadState.downloads as dl}
-				<!-- Download card -->
-				<Panel variant="soft">
-					<Flexbox gap="3" direction="column" class="flex-auto">
-						<!-- Row 1 => Icon + FileName + Status -->
-						<Flexbox gap="3" align="center" class="w-100">
-							{@const Icon = typeIcons[dl.type]}
-							<Icon size="1.4rem" class="shrink-0" />
-
-							<Text truncate>{dl.fileName}</Text>
-							<div class="flex-auto"></div>
-
-							<Badge variant="soft" size="3" color={statusColor(dl.status)}>
-								{dl.status}
-							</Badge>
+		{#if newState.fileinfo?.url}
+			<Panel variant="soft" size="0">
+				<!-- Infos -->
+				<Flexbox gap="4" align="stretch" class="p-5">
+					<Panel size="2" style="width: 120px;" class="shrink-0 ">
+						<Flexbox gap="3" align="center" justify="center" class="h-100">
+							<Database class="shrink-0" />
+							<Text muted weight="medium" wrap="nowrap" align="center" class="flex-auto">
+								{formatBytes(newState.fileinfo.size)}
+							</Text>
 						</Flexbox>
+					</Panel>
 
-						<!-- Row 2 => progressbar -->
-						<Flexbox gap="3" class="w-100">
-							<ProgressBar value={dl.progress} color={statusColor(dl.status)} />
+					<Panel size="2" class="flex-auto min-w-0">
+						<Flexbox gap="3" align="center">
+							<FileArrowDown class="shrink-0" />
+							<Text
+								muted
+								weight="medium"
+								wrap="pretty"
+								class="min-w-0"
+								title="path where the file will be saved">{newState.pathPreview}</Text
+							>
 						</Flexbox>
+					</Panel>
+				</Flexbox>
+				<Separator size="4" />
 
-						<!-- Row 3 => Stats + Actions -->
-						<Flexbox gap="1" justify="between" class="w-100">
-							<table class="stats">
-								<tbody>
-									<tr>
-										<td>
-											<Text truncate wrap="nowrap">Downloaded</Text>
-										</td>
-										<td>
-											<Flexbox gap="1">
-												<Text size="2" truncate wrap="nowrap">
-													{formatBytes(Number(dl.downloadedBytes))}
-												</Text>
-												<Text size="2" muted truncate wrap="nowrap">
-													/&nbsp;{formatBytes(Number(dl.fileSize))}
-												</Text>
-											</Flexbox>
-										</td>
-									</tr>
+				<Flexbox direction="column" gap="4" as="form" class="p-5">
+					<!-- Type -->
+					<Flexbox gap="4" align="center">
+						<span>Type</span>
 
-									<tr>
-										<td>
-											<Text truncate wrap="nowrap">Speed</Text>
-										</td>
-										<td>
-											<Flexbox gap="1">
-												<Text size="2" truncate wrap="nowrap">
-													{formatBytes(dl.speed)}/s
-												</Text>
-											</Flexbox>
-										</td>
-									</tr>
+						<Select
+							id="type-{id}"
+							name="type"
+							size="3"
+							style="min-width: 150px;"
+							class="flex-auto"
+							options={Object.values(DownloadType)}
+							bind:value={newState.type}
+						/>
+						<!-- <Flexbox gap="4" align="center">
+							{#each Object.values(DownloadType) as type (type)}
+								<Button
+									size="3"
+									variant={newState.type === type ? 'solid' : 'soft'}
+									onclick={() => {
+										newState.type = type;
+									}}
+								>
+									{@const Icon = typeIcons[type]}
+									<Icon  />
+									{type}
+								</Button>
+							{/each}
+						</Flexbox> -->
+					</Flexbox>
 
-									<tr>
-										<td>
-											<Text truncate wrap="nowrap">Progress</Text>
-										</td>
-										<td>
-											<Text size="2" truncate wrap="nowrap">
-												{formatProgress(dl.progress)}
-											</Text>
-										</td>
-									</tr>
+					<!-- File dir -->
+					<Flexbox gap="4" align="center" as="label">
+						<span> Save to </span>
 
-									<tr>
-										<td>
-											<Text truncate wrap="nowrap">Remaining</Text>
-										</td>
-										<td>
-											<Text size="2" truncate wrap="nowrap">
-												{formatRemainingTime(
-													Number(dl.fileSize),
-													Number(dl.downloadedBytes),
-													dl.speed ?? 0
-												)}
-											</Text>
-										</td>
-									</tr>
-								</tbody>
-							</table>
+						<Flexbox gap="2" class="flex-auto">
+							<Input
+								id="fileDir-{id}"
+								name="fileDir"
+								fullWidth
+								size="3"
+								bind:value={newState.fileDir}
+								disabled={newState.loading}
+							/>
 
-							<Flexbox gap="2" align="end">
-								{#if dl.status === DownloadStatus.PAUSED}
-									<Button
-										size="3"
-										variant="soft"
-										iconOnly
-										onclick={() => downloadState.resume(dl.id)}
-									>
-										<Play weight="bold" />
-									</Button>
-								{/if}
-
-								{#if dl.status === DownloadStatus.DOWNLOADING}
-									<Button
-										size="3"
-										variant="soft"
-										iconOnly
-										onclick={() => downloadState.pause(dl.id)}
-									>
-										<Pause weight="bold" />
-									</Button>
-								{/if}
-
-								{#if [DownloadStatus.DOWNLOADING, DownloadStatus.PAUSED].includes(dl.status)}
-									<Button
-										size="3"
-										variant="soft"
-										iconOnly
-										onclick={() => downloadState.cancel(dl.id)}
-									>
-										<X weight="bold" />
-									</Button>
-								{/if}
-							</Flexbox>
+							<SelectDirectory
+								options={newState.directories}
+								disabled={newState.directories.length === 0}
+								onSelect={(dir) => (newState.fileDir = dir)}
+							>
+								<Folder />
+							</SelectDirectory>
 						</Flexbox>
 					</Flexbox>
-				</Panel>
-			{/each}
-		</Flexbox>
-	{:else}
-		<EmptyState text="No downloads..." />
-	{/if}
+
+					<!-- File name -->
+					<Flexbox gap="4" align="center" as="label">
+						<span> Rename </span>
+						<Input
+							id="fileName-{id}"
+							name="fileName"
+							size="3"
+							fullWidth
+							bind:value={newState.fileName}
+							disabled={newState.loading}
+						/>
+					</Flexbox>
+				</Flexbox>
+			</Panel>
+
+			<!-- Submit -->
+			<Flexbox>
+				<Button size="3" onclick={newState.create}>
+					<Play weight="fill" />
+					Start download
+				</Button>
+			</Flexbox>
+		{/if}
+	</Flexbox>
 </PageLayout>
 
 <style>
-	h2 {
-		line-height: 1;
-	}
-
-	table {
-		&.form {
-			border: none;
-			border-spacing: var(--space-6) var(--space-3);
-			margin: calc(var(--space-3) * -1) calc(var(--space-6) * -1);
-			min-width: 100%;
-
-			tr {
-				td {
-					padding: 0;
-
-					&:first-child {
-						width: 35px;
-					}
-				}
-			}
-		}
-
-		&.stats {
-			tr {
-				td {
-					padding: 0;
-
-					&:first-child {
-						width: 105px;
-					}
-				}
-			}
-		}
+	span {
+		min-width: 120px;
+		text-align: right;
 	}
 </style>

@@ -2,8 +2,6 @@ import { api } from '$lib/api/api.svelte';
 import { useAsyncState, type AsyncStateOptions } from '$lib/api/use-async-state.svelte';
 import {
 	DownloadStatus,
-	DownloadType,
-	type CreateDownloadInput,
 	type Download,
 	type DownloadFilters,
 	type DownloadPage,
@@ -12,18 +10,6 @@ import {
 
 export const createDownloadState = () => {
 	let downloads = $state<Download[]>([]);
-	let url = $state<string>('');
-	let type = $state<DownloadType>(DownloadType.MOVIE);
-
-	const createState = useAsyncState<Download, CreateDownloadInput>(
-		api.download.create, //
-		{
-			immediate: false,
-			onSuccess(data) {
-				downloads = [...downloads, data];
-			}
-		}
-	);
 
 	const actionOptions: AsyncStateOptions<Download> = {
 		immediate: false,
@@ -60,29 +46,12 @@ export const createDownloadState = () => {
 	}
 
 	return {
-		// Url
-		get url() {
-			return url;
-		},
-		set url(value) {
-			url = value;
-		},
-		// Type
-		get type() {
-			return type;
-		},
-		set type(value) {
-			type = value;
-		},
-		//
 		get downloads() {
 			return downloads;
 		},
-		//
 		get loading() {
 			return (
-				createState.loading ||
-				pauseState.loading ||
+				pauseState.loading || //
 				resumeState.loading ||
 				cancelState.loading ||
 				archiveState.loading
@@ -90,15 +59,11 @@ export const createDownloadState = () => {
 		},
 		get error() {
 			return (
-				createState.error ||
-				pauseState.error ||
+				pauseState.error || //
 				resumeState.error ||
 				cancelState.error ||
 				archiveState.error
 			);
-		},
-		create() {
-			createState.execute({ url, type });
 		},
 		pause: pauseState.execute,
 		resume: resumeState.execute,
@@ -117,9 +82,7 @@ export const createDownloadState = () => {
 					console.log('SSE error', error);
 				},
 				onMessage(event: MessageEvent<string>) {
-					console.log('SSE progress', event);
 					const progress = JSON.parse(event.data) as DownloadProgressEvent;
-
 					if (downloads) {
 						const index = downloads?.findIndex((dl) => dl.id === progress.downloadId);
 						if (index !== -1) {

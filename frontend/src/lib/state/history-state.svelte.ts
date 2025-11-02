@@ -32,7 +32,6 @@ export const createHistoryState = () => {
 			return status;
 		},
 		set status(value) {
-			console.log('status', value);
 			status = value;
 			page = 0;
 			get();
@@ -42,7 +41,6 @@ export const createHistoryState = () => {
 			return type;
 		},
 		set type(value) {
-			console.log('type', value);
 			type = value;
 			page = 0;
 			get();

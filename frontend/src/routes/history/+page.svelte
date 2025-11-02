@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import DownloadStatusBadge from '$lib/components/DownloadStatusBadge.svelte';
 	import Dropdown from '$lib/components/Dropdown.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -10,20 +12,35 @@
 	import { typeIcons } from '$lib/utils/type-icons';
 	import ArrowsClockwise from 'phosphor-svelte/lib/ArrowsClockwise';
 	import { onMount } from 'svelte';
-	import { Button, Flexbox, Panel, Text } from 'svxui';
+	import { Button, Flexbox, isBrowser, Panel, Text } from 'svxui';
 
 	const historyState = createHistoryState();
 	onMount(historyState.get);
+
+	function parseParam<T>(param?: string | null): T[] {
+		return (param?.split(',').filter(Boolean) ?? []) as T[];
+	}
+
+	onMount(() => {
+		historyState.status = parseParam<DownloadStatus>(page.url.searchParams.get('status'));
+		historyState.type = parseParam<DownloadType>(page.url.searchParams.get('type'));
+	});
+
+	$effect(() => {
+		if (isBrowser()) {
+			const searchParams = new URLSearchParams();
+			searchParams.set('status', historyState.status?.join(','));
+			searchParams.set('type', historyState.type?.join(','));
+			goto(`?${searchParams.toString()}`, {
+				replaceState: true,
+				noScroll: true,
+				keepFocus: true
+			});
+		}
+	});
 </script>
 
 <PageLayout title="History" error={historyState.error}>
-	{#snippet buttons()}
-		<Button size="2" disabled={historyState.loading} onclick={historyState.get}>
-			<ArrowsClockwise weight="bold" />
-			Refresh
-		</Button>
-	{/snippet}
-
 	<Flexbox direction="column" gap="5">
 		<Flexbox gap="3">
 			<Dropdown bind:value={historyState.status} options={Object.values(DownloadStatus)}>
@@ -38,12 +55,24 @@
 				{/snippet}
 			</Dropdown>
 
-			<Button onclick={historyState.resetFilters} disabled={!historyState.hasFilters}>
+			<div class="flex-auto"></div>
+
+			<Button
+				size="3"
+				variant="outline"
+				onclick={historyState.resetFilters}
+				disabled={!historyState.hasFilters}
+			>
 				Reset filters
+			</Button>
+
+			<Button size="3" disabled={historyState.loading} onclick={historyState.get}>
+				<ArrowsClockwise weight="bold" />
+				Refresh
 			</Button>
 		</Flexbox>
 
-		{#if historyState.current}
+		{#if Array.isArray(historyState.current?.data) && historyState.current?.data?.length}
 			<Flexbox direction="column" gap="2">
 				{#each historyState.current?.data as dl}
 					<Panel variant="soft">

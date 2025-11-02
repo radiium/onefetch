@@ -4,6 +4,7 @@ import type {
 	Download,
 	DownloadFilters,
 	DownloadPage,
+	FileinfoResponse,
 	Settings
 } from '../types/types';
 import { HttpClient } from './http-client';
@@ -13,6 +14,19 @@ export const baseUrl = browser ? `${location.protocol}//${location.host}` : '';
 export const http = new HttpClient(baseUrl);
 
 export const api = {
+	settings: {
+		async get(): Promise<Settings> {
+			return http.get('/api/settings');
+		},
+		async update(settings?: Partial<Settings>): Promise<Settings> {
+			return http.patch('/api/settings', settings);
+		}
+	},
+	fileinfo: {
+		async get(url?: string): Promise<FileinfoResponse> {
+			return http.get('/api/fileinfo', { params: { url } });
+		}
+	},
 	download: {
 		async getAll(params?: DownloadFilters): Promise<DownloadPage> {
 			return http.get('/api/downloads', { params });
@@ -40,14 +54,6 @@ export const api = {
 				event: 'progress',
 				...options
 			});
-		}
-	},
-	settings: {
-		async get(): Promise<Settings> {
-			return http.get('/api/settings');
-		},
-		async update(settings?: Partial<Settings>): Promise<Settings> {
-			return http.patch('/api/settings', settings);
 		}
 	}
 };
