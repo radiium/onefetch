@@ -15,6 +15,7 @@ type ServiceContainer struct {
 	SSEManager      sse.Manager
 	DownloadHandler handler.DownloadHandler
 	SettingsHandler handler.SettingsHandler
+	FileinfoHandler handler.FileinfoHandler
 }
 
 // NewServiceContainer initialise le container avec toutes les dépendances
@@ -26,10 +27,12 @@ func NewServiceContainer(cfg *config.Config, db *database.Database, sseManager s
 	// Services
 	downloadService := service.NewDownloadService(downloadRepo, settingsRepo, sseManager)
 	settingsService := service.NewSettingsService(settingsRepo)
+	fileinfoService := service.NewFileinfoService(settingsRepo)
 
 	// Handlers
 	downloadHandler := handler.NewDownloadHandler(downloadService)
 	settingsHandler := handler.NewSettingsHandler(settingsService)
+	fileinfoHandler := handler.NewFileinfoHandler(fileinfoService)
 
 	return &ServiceContainer{
 		Config:          cfg,
@@ -37,5 +40,6 @@ func NewServiceContainer(cfg *config.Config, db *database.Database, sseManager s
 		SSEManager:      sseManager,
 		DownloadHandler: downloadHandler,
 		SettingsHandler: settingsHandler,
+		FileinfoHandler: fileinfoHandler,
 	}
 }

@@ -14,6 +14,10 @@ func SetupRoutes(app *fiber.App, container *utils.ServiceContainer) {
 	settings.Get("/", container.SettingsHandler.GetSettings)
 	settings.Patch("/", container.SettingsHandler.UpdateSettings)
 
+	// Fileinfo routes
+	files := api.Group("/fileinfo")
+	files.Get("", container.FileinfoHandler.Get)
+
 	// Download routes
 	downloads := api.Group("/downloads")
 	downloads.Post("/", container.DownloadHandler.CreateDownload)
@@ -23,21 +27,16 @@ func SetupRoutes(app *fiber.App, container *utils.ServiceContainer) {
 	downloads.Post("/:id/cancel", container.DownloadHandler.CancelDownload)
 	downloads.Post("/:id/archive", container.DownloadHandler.ArchiveDownload)
 	downloads.Delete("/:id", container.DownloadHandler.DeleteDownload)
-	// SSE
+
+	// Download SSE routes
 	downloads.Get("/streams", container.SSEManager.Handler)
-	// container.SSEManager.OnConnect(func(ctx *fiber.Ctx, name string) {
-	// 	log.Infof("[SSEManager] Client connected: %s", name)
-	// })
-	// container.SSEManager.OnDisconnect(func(ctx *fiber.Ctx, name string) {
-	// 	log.Infof("[SSEManager] Client disconnected: %s", name)
-	// })
-	// container.SSEManager.OnEvent("dl", func(ctx *fiber.Ctx, name string, sseEvent *sse.Event) {
-	// 	log.Infof("[SSEManager] Client event sent: %s - %s", name, sseEvent.Data)
-	// })
 
 	// Static webapp
 	if container.Config.IsProd() {
 		app.Static("/", "./web")
+		app.Get("/new", func(c *fiber.Ctx) error {
+			return c.SendFile("./web/new.html")
+		})
 		app.Get("/settings", func(c *fiber.Ctx) error {
 			return c.SendFile("./web/settings.html")
 		})
