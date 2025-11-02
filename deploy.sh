@@ -6,7 +6,6 @@ VERSION="latest"
 
 docker login
 
-
 # Créer et utiliser le builder multi-arch (si pas déjà fait)
 docker buildx create --name multiarch --driver docker-container --use 2>/dev/null || true
 docker buildx use multiarch
