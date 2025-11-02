@@ -1,4 +1,3 @@
-// internal/handlers/download_handler.go
 package handler
 
 import (
@@ -46,11 +45,11 @@ func (h *downloadHandler) CreateDownload(c *fiber.Ctx) error {
 	}
 
 	downloadType := model.DownloadType(req.Type)
-	if downloadType != model.TypeMovie && downloadType != model.TypeTVShow {
+	if downloadType != model.TypeMovie && downloadType != model.TypeSerie {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid download type")
 	}
 
-	download, err := h.service.CreateDownload(req.URL, downloadType)
+	download, err := h.service.CreateDownload(req.URL, downloadType, *req.FileName, *req.FileDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}

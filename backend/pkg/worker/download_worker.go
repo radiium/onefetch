@@ -131,8 +131,13 @@ func (w *DownloadWorker) downloadFile() error {
 		return err
 	}
 
-	tempPath := filepath.Join(w.download.DownloadPath, "."+w.download.FileName+".tmp")
-	finalPath := filepath.Join(w.download.DownloadPath, w.download.FileName)
+	fileName := w.download.FileName
+	if w.download.CustomFileName != nil && *w.download.CustomFileName != "" {
+		fileName = *w.download.CustomFileName
+	}
+
+	tempPath := filepath.Join(w.download.DownloadPath, "."+fileName+".tmp")
+	finalPath := filepath.Join(w.download.DownloadPath, fileName)
 
 	w.mu.Lock()
 	w.download.TempPath = &tempPath
@@ -151,7 +156,7 @@ func (w *DownloadWorker) downloadFile() error {
 	// Wrapper pour gérer la pause/reprise dans le callback
 	progressCallback := w.createProgressCallback(fileSize)
 
-	// Télécharger avec gestion du contexte - UTILISE LA NOUVELLE MÉTHODE
+	// Télécharger avec gestion du contexte
 	if err := w.fileManager.WriteTempFileWithContext(w.ctx, src, tempPath, progressCallback); err != nil {
 		w.fileManager.RemoveFile(tempPath)
 		return err

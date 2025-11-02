@@ -19,7 +19,7 @@ import (
 )
 
 type DownloadService interface {
-	CreateDownload(fileURL string, downloadType model.DownloadType) (*model.Download, error)
+	CreateDownload(fileURL string, downloadType model.DownloadType, fileName string, fileDir string) (*model.Download, error)
 	PauseDownload(id string) (*model.Download, error)
 	ResumeDownload(id string) (*model.Download, error)
 	CancelDownload(id string) (*model.Download, error)
@@ -50,13 +50,13 @@ func NewDownloadService(
 	}
 }
 
-func (ds *downloadService) CreateDownload(fileURL string, downloadType model.DownloadType) (*model.Download, error) {
+func (ds *downloadService) CreateDownload(fileURL string, downloadType model.DownloadType, fileName string, fileDir string) (*model.Download, error) {
 	settings, err := ds.settingsRepo.Get()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get settings: %w", err)
 	}
 
-	if settings.APIKey == "" {
+	if settings.APIKey1fichier == "" {
 		return nil, fmt.Errorf("API key not configured")
 	}
 
@@ -66,15 +66,22 @@ func (ds *downloadService) CreateDownload(fileURL string, downloadType model.Dow
 		return nil, fmt.Errorf("failed to parse fileID: %w", err)
 	}
 
+	customFileName := sanitizePathComponent(&fileName)
+	customFileDir := sanitizePathComponent(&fileDir)
+	downloadPath := filepath.Join(settings.DownloadPath, downloadType.Dir(), customFileDir)
+	// downloadPath := utils.BuildCleanPath(settings.DownloadPath)
+
 	download := &model.Download{
-		ID:           uuid.New().String(),
-		FileURL:      fileURL,
-		FileID:       fileID,
-		Type:         downloadType,
-		Status:       model.StatusPending,
-		Progress:     0,
-		DownloadPath: filepath.Join(settings.DownloadPath, downloadType.Dir()),
-		RetryCount:   0,
+		ID:             uuid.New().String(),
+		FileURL:        fileURL,
+		FileID:         fileID,
+		CustomFileName: &customFileName,
+		Type:           downloadType,
+		Status:         model.StatusPending,
+		Progress:       0,
+		DownloadPath:   downloadPath,
+		RetryCount:     0,
+		IsArchived:     false,
 	}
 
 	if err := ds.downloadRepo.Create(download); err != nil {
@@ -82,7 +89,7 @@ func (ds *downloadService) CreateDownload(fileURL string, downloadType model.Dow
 	}
 
 	// Démarrer le téléchargement dans une goroutine
-	go ds.startDownload(download, settings.APIKey)
+	go ds.startDownload(download, settings.APIKey1fichier)
 
 	return download, nil
 }
@@ -310,4 +317,33 @@ func (ds *downloadService) extract1fichierFileID(rawURL string) (string, error) 
 	}
 
 	return fileID, nil
+}
+
+// sanitizePathComponent nettoie un composant de chemin
+func sanitizePathComponent(component *string) string {
+
+	if component == nil {
+		return ""
+	}
+
+	comp := *component
+
+	// Caractères interdits sous Linux : / et \0 (null byte)
+	// On ajoute aussi \ pour éviter les problèmes de compatibilité
+	comp = strings.ReplaceAll(comp, "/", "_")
+	comp = strings.ReplaceAll(comp, "\x00", "")
+	comp = strings.ReplaceAll(comp, "\\", "_")
+
+	// Suppression des espaces en début/fin
+	comp = strings.TrimSpace(comp)
+
+	// Remplacement des séquences dangereuses
+	comp = strings.ReplaceAll(comp, "..", "_")
+
+	// Si le composant devient vide après nettoyage, retourner un nom par défaut
+	if comp == "" || comp == "." {
+		comp = ""
+	}
+
+	return comp
 }
