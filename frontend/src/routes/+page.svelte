@@ -1,6 +1,5 @@
 <script lang="ts">
 	import PageLayout from '$lib/components/PageLayout.svelte';
-	import SelectDirectory from '$lib/components/SelectDirectory.svelte';
 	import { createNewState } from '$lib/state/new-state.svelte';
 	import { DownloadType } from '$lib/types/types';
 	import { useClipboard } from '$lib/utils/clipboard.svelte';
@@ -8,16 +7,15 @@
 	import Database from 'phosphor-svelte/lib/Database';
 	import FileArrowDown from 'phosphor-svelte/lib/FileArrowDown';
 	import Play from 'phosphor-svelte/lib/Play';
-	import Folder from 'phosphor-svelte/lib/Folder';
 
-	import { Button, Flexbox, Input, InputGroup, Panel, Select, Separator, Text } from 'svxui';
+	import { Button, Flexbox, Input, Panel, Select, Separator, Text } from 'svxui';
 
 	const id = $props.id();
 	const newState = createNewState();
 	const clipboard = useClipboard();
 </script>
 
-<PageLayout title="New task">
+<PageLayout title="New task" error={newState.error}>
 	<Flexbox direction="column" gap="6">
 		<!-- Url -->
 		<Flexbox gap="4" align="center" as="label">
@@ -110,13 +108,13 @@
 								disabled={newState.loading}
 							/>
 
-							<SelectDirectory
+							<!-- <SelectDirectory
 								options={newState.directories}
 								disabled={newState.directories.length === 0}
 								onSelect={(dir) => (newState.fileDir = dir)}
 							>
 								<Folder />
-							</SelectDirectory>
+							</SelectDirectory> -->
 						</Flexbox>
 					</Flexbox>
 

@@ -31,7 +31,7 @@
 							{@const Icon = typeIcons[dl.type]}
 							<Icon size="1.4rem" class="shrink-0" />
 
-							<Text truncate>{dl.fileName}</Text>
+							<Text truncate>{dl.customFileName ?? dl.fileName}</Text>
 							<div class="flex-auto"></div>
 
 							<Badge variant="soft" size="3" color={statusColor[dl.status]}>

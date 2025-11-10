@@ -1,15 +1,22 @@
 <script>
+	import { goto } from '$app/navigation';
+	import { asset } from '$app/paths';
 	import NavButton from '$lib/components/NavButton.svelte';
 	import Archive from 'phosphor-svelte/lib/Archive';
 	import BoxArrowDown from 'phosphor-svelte/lib/BoxArrowDown';
+	import CheckCircle from 'phosphor-svelte/lib/CheckCircle';
+	import Folders from 'phosphor-svelte/lib/Folders';
 	import Gear from 'phosphor-svelte/lib/Gear';
-	import Plus from 'phosphor-svelte/lib/Plus';
 	import IconContext from 'phosphor-svelte/lib/IconContext';
+	import Pause from 'phosphor-svelte/lib/Pause';
+	import Play from 'phosphor-svelte/lib/Play';
+	import Plus from 'phosphor-svelte/lib/Plus';
+	import Stop from 'phosphor-svelte/lib/Stop';
+	import WarningCircle from 'phosphor-svelte/lib/WarningCircle';
 	import { Button, Flexbox, Separator, Text, ThemeRootProvider } from 'svxui';
 	import 'svxui/normalize.css';
 	import 'svxui/tokens.css';
 	import 'svxui/utilities.css';
-	import { goto } from '$app/navigation';
 
 	let { children } = $props();
 </script>
@@ -19,7 +26,7 @@
 		<div class="container">
 			<aside>
 				<Flexbox as="header" gap="1" align="center" justify="start" class="mb-5">
-					<img src="logo.png" alt="logo" />
+					<img src={asset('/logo.png')} alt="logo" />
 					<Flexbox>
 						<Text weight="bold" size="5" transform="uppercase" as="div" color="orange">one</Text>
 						<Text weight="bold" size="5" transform="uppercase" as="i">fetch</Text>
@@ -39,6 +46,39 @@
 					<Plus size="1.2rem" />
 					<span>New task</span>
 				</Button>
+
+				<Separator size="4" class="my-4" />
+
+				<NavButton route="/dl/all" title="All">
+					<BoxArrowDown size="1.2rem" />
+					<span>All</span>
+				</NavButton>
+				<NavButton route="/dl/downloading" title="Downloading">
+					<Play size="1.2rem" />
+					<span>Downloading</span>
+				</NavButton>
+				<NavButton route="/dl/paused" title="Paused">
+					<Pause size="1.2rem" />
+					<span>Paused</span>
+				</NavButton>
+				<NavButton route="/dl/cancelled" title="Cancelled">
+					<Stop size="1.2rem" />
+					<span>Cancelled</span>
+				</NavButton>
+				<NavButton route="/dl/failed" title="Failed">
+					<WarningCircle size="1.2rem" />
+					<span>Failed</span>
+				</NavButton>
+				<NavButton route="/dl/completed" title="Completed">
+					<CheckCircle size="1.2rem" />
+					<span>Completed</span>
+				</NavButton>
+
+				<Separator size="4" class="my-4" />
+				<NavButton route="/files" title="Files">
+					<Folders size="1.2rem" />
+					<span>Files</span>
+				</NavButton>
 
 				<Separator size="4" class="my-4" />
 

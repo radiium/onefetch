@@ -1,0 +1,6 @@
+backend/data
+backend/downloads
+frontend/.svelte-kit
+dist
+build
+.DS_Store

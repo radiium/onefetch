@@ -82,7 +82,7 @@
 								<Icon size="1.4rem" class="shrink-0" />
 
 								<Flexbox gap="2" direction="column" class="flex-auto min-w-0">
-									<Text truncate>{dl.fileName}</Text>
+									<Text truncate>{dl.customFileName ?? dl.fileName}</Text>
 
 									<Flexbox gap="1" class="min-w-0">
 										<Text size="2" truncate wrap="nowrap">{formatBytes(Number(dl.fileSize))}</Text>
