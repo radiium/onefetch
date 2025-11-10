@@ -12,24 +12,29 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// Handles channel events (connect, disconnect)
-type FiberSSEEventHandler func(ctx *fiber.Ctx, name string)
+type Manager interface {
+	GetClientCount() int
+	GetClients() []string
+	SendEvent(event string, data interface{}) error
+	Close() error
+	Print()
+	Handler(c *fiber.Ctx) error
+	FireHandlers(c *fiber.Ctx, event string)
+	OnConnect(handlers ...OnStatusEventHandler) Manager
+	OnDisconnect(handlers ...OnStatusEventHandler) Manager
+	OnEvent(eventName string, handlers ...OnEventHandler) Manager
+}
 
-// Handles specific events
-type FiberSSEOnEventHandler func(ctx *fiber.Ctx, name string, sseEvent *Event)
-
-// Configuration options for Manager
-type ManagerConfig struct {
-	// Name of the SSE channel (required)
-	Name string
-	// Buffer size for client event channels (default: 10)
-	BufferSize int
-	// Heartbeat interval (default: 15s, 0 to disable)
-	HeartbeatInterval time.Duration
-	// Timeout for sending events to slow clients (default: 1s)
-	SendTimeout time.Duration
-	// Enable debug logs
-	Debug bool
+// Manager represents an SSE channel with multiple clients
+type manager struct {
+	Name           string
+	Config         ManagerConfig
+	clients        map[string]*Client
+	clientsMux     sync.RWMutex
+	StatusHandlers map[string][]OnStatusEventHandler
+	EventHandlers  map[string][]OnEventHandler
+	closed         bool
+	closedMux      sync.RWMutex
 }
 
 // DefaultConfig returns default configuration
@@ -41,38 +46,6 @@ func DefaultConfig() ManagerConfig {
 		SendTimeout:       1 * time.Second,
 		Debug:             false,
 	}
-}
-
-// Client représente une connexion SSE individuelle
-type Client struct {
-	ID        string
-	Events    chan *Event
-	ConnectAt time.Time
-}
-
-type Manager interface {
-	GetClientCount() int
-	GetClients() []string
-	SendEvent(event string, data interface{}) error
-	Close() error
-	Print()
-	Handler(c *fiber.Ctx) error
-	FireHandlers(c *fiber.Ctx, event string)
-	OnConnect(handlers ...FiberSSEEventHandler) Manager
-	OnDisconnect(handlers ...FiberSSEEventHandler) Manager
-	OnEvent(eventName string, handlers ...FiberSSEOnEventHandler) Manager
-}
-
-// Manager représente un canal SSE avec plusieurs clients
-type manager struct {
-	Name          string
-	Config        ManagerConfig
-	clients       map[string]*Client
-	clientsMux    sync.RWMutex
-	Handlers      map[string][]FiberSSEEventHandler
-	EventHandlers map[string][]FiberSSEOnEventHandler
-	closed        bool
-	closedMux     sync.RWMutex
 }
 
 // Create new SSE Manager with optional config
@@ -111,12 +84,12 @@ func New(config ...ManagerConfig) Manager {
 	}
 
 	return &manager{
-		Name:          cfg.Name,
-		Config:        cfg,
-		clients:       make(map[string]*Client),
-		Handlers:      make(map[string][]FiberSSEEventHandler),
-		EventHandlers: make(map[string][]FiberSSEOnEventHandler),
-		closed:        false,
+		Name:           cfg.Name,
+		Config:         cfg,
+		clients:        make(map[string]*Client),
+		StatusHandlers: make(map[string][]OnStatusEventHandler),
+		EventHandlers:  make(map[string][]OnEventHandler),
+		closed:         false,
 	}
 }
 
@@ -351,7 +324,7 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 
 // Executes handlers synchronously with the valid context
 func (m *manager) FireHandlers(c *fiber.Ctx, event string) {
-	if handlers, ok := m.Handlers[event]; ok {
+	if handlers, ok := m.StatusHandlers[event]; ok {
 		for _, handler := range handlers {
 			handler(c, m.Name)
 		}
@@ -359,62 +332,28 @@ func (m *manager) FireHandlers(c *fiber.Ctx, event string) {
 }
 
 // Registers handlers for connection
-func (m *manager) OnConnect(handlers ...FiberSSEEventHandler) Manager {
-	if _, ok := m.Handlers["connect"]; !ok {
-		m.Handlers["connect"] = []FiberSSEEventHandler{}
+func (m *manager) OnConnect(handlers ...OnStatusEventHandler) Manager {
+	if _, ok := m.StatusHandlers["connect"]; !ok {
+		m.StatusHandlers["connect"] = []OnStatusEventHandler{}
 	}
-	m.Handlers["connect"] = append(m.Handlers["connect"], handlers...)
+	m.StatusHandlers["connect"] = append(m.StatusHandlers["connect"], handlers...)
 	return m
 }
 
 // Registers handlers for disconnection
-func (m *manager) OnDisconnect(handlers ...FiberSSEEventHandler) Manager {
-	if _, ok := m.Handlers["disconnect"]; !ok {
-		m.Handlers["disconnect"] = []FiberSSEEventHandler{}
+func (m *manager) OnDisconnect(handlers ...OnStatusEventHandler) Manager {
+	if _, ok := m.StatusHandlers["disconnect"]; !ok {
+		m.StatusHandlers["disconnect"] = []OnStatusEventHandler{}
 	}
-	m.Handlers["disconnect"] = append(m.Handlers["disconnect"], handlers...)
+	m.StatusHandlers["disconnect"] = append(m.StatusHandlers["disconnect"], handlers...)
 	return m
 }
 
 // Registers handlers for a specific event
-func (m *manager) OnEvent(eventName string, handlers ...FiberSSEOnEventHandler) Manager {
+func (m *manager) OnEvent(eventName string, handlers ...OnEventHandler) Manager {
 	if _, ok := m.EventHandlers[eventName]; !ok {
-		m.EventHandlers[eventName] = []FiberSSEOnEventHandler{}
+		m.EventHandlers[eventName] = []OnEventHandler{}
 	}
 	m.EventHandlers[eventName] = append(m.EventHandlers[eventName], handlers...)
 	return m
-}
-
-// Represents an SSE event
-type Event struct {
-	ID        string
-	Event     string
-	Data      string
-	Retry     string
-	Timestamp time.Time
-	OnChannel *manager
-}
-
-// Writes a SSE event to the writer according to the SSE standard
-func (e *Event) Flush(w *bufio.Writer) error {
-	if e.ID != "" {
-		fmt.Fprintf(w, "id: %s\n", e.ID)
-	}
-	if e.Retry != "" {
-		fmt.Fprintf(w, "retry: %s\n", e.Retry)
-	}
-	fmt.Fprintf(w, "event: %s\n", e.Event)
-	fmt.Fprintf(w, "data: %s\n\n", e.Data)
-
-	return w.Flush()
-}
-
-// Executes the handlers registered for this event
-func (e *Event) FireEventHandlers(ctx *fiber.Ctx) {
-	channel := e.OnChannel
-	if handlers, ok := channel.EventHandlers[e.Event]; ok {
-		for _, handler := range handlers {
-			handler(ctx, channel.Name, e)
-		}
-	}
 }

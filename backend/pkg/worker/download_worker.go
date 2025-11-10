@@ -3,9 +3,10 @@ package worker
 import (
 	"context"
 	"dlbackend/internal/model"
+	"dlbackend/internal/utils"
 	"dlbackend/pkg/client"
-	"dlbackend/pkg/filesystem"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -15,7 +16,6 @@ import (
 type DownloadWorker struct {
 	download         *model.Download
 	client           client.OneFichierClient
-	fileManager      filesystem.FileManager
 	ctx              context.Context
 	cancel           context.CancelFunc
 	mu               sync.RWMutex
@@ -47,14 +47,12 @@ type ProgressUpdate struct {
 func NewDownloadWorker(
 	download *model.Download,
 	apiKey string,
-	fileManager filesystem.FileManager,
 ) *DownloadWorker {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &DownloadWorker{
 		download:         download,
 		client:           client.NewOneFichierClient(apiKey),
-		fileManager:      fileManager,
 		ctx:              ctx,
 		cancel:           cancel,
 		state:            StateRunning,
@@ -79,7 +77,7 @@ func (w *DownloadWorker) Start() error {
 
 	// Étape 3: Télécharger le fichier
 	if err := w.downloadFile(); err != nil {
-		return fmt.Errorf("download failed: %w", err)
+		return fmt.Errorf("failed to download file: %w", err)
 	}
 
 	w.setState(StateCompleted)
@@ -127,7 +125,7 @@ func (w *DownloadWorker) fetchDownloadToken() error {
 
 // Dans download_worker.go, modifier downloadFile
 func (w *DownloadWorker) downloadFile() error {
-	if err := w.fileManager.EnsureDir(w.download.DownloadPath); err != nil {
+	if err := utils.EnsureDir(w.download.DownloadPath); err != nil {
 		return err
 	}
 
@@ -157,13 +155,13 @@ func (w *DownloadWorker) downloadFile() error {
 	progressCallback := w.createProgressCallback(fileSize)
 
 	// Télécharger avec gestion du contexte
-	if err := w.fileManager.WriteTempFileWithContext(w.ctx, src, tempPath, progressCallback); err != nil {
-		w.fileManager.RemoveFile(tempPath)
+	if err := utils.WriteTempFileWithContext(w.ctx, src, tempPath, progressCallback); err != nil {
+		os.Remove(tempPath)
 		return err
 	}
 
 	// Déplacer le fichier temporaire vers le fichier final
-	if err := w.fileManager.MoveFile(tempPath, finalPath); err != nil {
+	if err := utils.MoveFile(tempPath, finalPath); err != nil {
 		return err
 	}
 
