@@ -1,6 +1,7 @@
 package model
 
 import (
+	"dlbackend/pkg/client"
 	"time"
 )
 
@@ -77,9 +78,15 @@ type CreateDownloadRequest struct {
 type DownloadProgressEvent struct {
 	DownloadID      string   `json:"downloadId"`
 	FileName        string   `json:"fileName"`
+	CustomFileName  *string  `json:"customFileName"`
 	Status          string   `json:"status"`
 	Progress        float64  `json:"progress"`
 	DownloadedBytes string   `json:"downloadedBytes"`
 	FileSize        *string  `json:"fileSize"`
 	Speed           *float64 `json:"speed"`
+}
+
+type DownloadInfoResponse struct {
+	Fileinfo client.OneFichierInfoResponse `json:"fileinfo"`
+	Dir      FSNode                        `json:"dir"`
 }

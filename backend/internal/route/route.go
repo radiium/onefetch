@@ -1,12 +1,13 @@
 package route
 
 import (
-	"dlbackend/internal/utils"
+	"dlbackend/internal/config"
+	"dlbackend/internal/container"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, container *utils.ServiceContainer) {
+func SetupRoutes(app *fiber.App, container *container.Container) {
 	api := app.Group("/api")
 
 	// Settings routes
@@ -14,14 +15,11 @@ func SetupRoutes(app *fiber.App, container *utils.ServiceContainer) {
 	settings.Get("/", container.SettingsHandler.GetSettings)
 	settings.Patch("/", container.SettingsHandler.UpdateSettings)
 
-	// Fileinfo routes
-	files := api.Group("/fileinfo")
-	files.Get("", container.FileinfoHandler.Get)
-
 	// Download routes
 	downloads := api.Group("/downloads")
-	downloads.Post("/", container.DownloadHandler.CreateDownload)
+	downloads.Get("/infos", container.DownloadHandler.GetInfos)
 	downloads.Get("/", container.DownloadHandler.ListDownloads)
+	downloads.Post("/", container.DownloadHandler.CreateDownload)
 	downloads.Post("/:id/pause", container.DownloadHandler.PauseDownload)
 	downloads.Post("/:id/resume", container.DownloadHandler.ResumeDownload)
 	downloads.Post("/:id/cancel", container.DownloadHandler.CancelDownload)
@@ -31,8 +29,14 @@ func SetupRoutes(app *fiber.App, container *utils.ServiceContainer) {
 	// Download SSE routes
 	downloads.Get("/streams", container.SSEManager.Handler)
 
+	// Files
+	files := api.Group("/files")
+	files.Get("/", container.FilesHandler.Get)
+	files.Post("/", container.FilesHandler.Post)
+	files.Delete("/", container.FilesHandler.Delete)
+
 	// Static webapp
-	if container.Config.IsProd() {
+	if config.Cfg.IsProd() {
 		app.Static("/", "./web")
 		app.Get("/new", func(c *fiber.Ctx) error {
 			return c.SendFile("./web/new.html")

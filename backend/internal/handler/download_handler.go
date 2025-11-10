@@ -1,20 +1,21 @@
 package handler
 
 import (
+	"dlbackend/internal/errors"
 	"dlbackend/internal/model"
 	"dlbackend/internal/service"
-	"errors"
+	"dlbackend/internal/utils"
 	"fmt"
-	"net/url"
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+// DownloadHandler handles HTTP requests for download operations.
 type DownloadHandler interface {
-	CreateDownload(c *fiber.Ctx) error
+	GetInfos(c *fiber.Ctx) error
 	ListDownloads(c *fiber.Ctx) error
+	CreateDownload(c *fiber.Ctx) error
 	PauseDownload(c *fiber.Ctx) error
 	ResumeDownload(c *fiber.Ctx) error
 	CancelDownload(c *fiber.Ctx) error
@@ -26,40 +27,30 @@ type downloadHandler struct {
 	service service.DownloadService
 }
 
+// GetInfos get file info from 1fichier api
+func (h *downloadHandler) GetInfos(c *fiber.Ctx) error {
+	url, err := utils.ValidateNotEmpty("url", c.Query("url"))
+	if err != nil {
+		return errors.HandleError(c, err)
+	}
+
+	fileinfo, err := h.service.GetFileinfo(url)
+	if err != nil {
+		return errors.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fileinfo)
+}
+
+// NewDownloadHandler creates a new DownloadHandler instance.
 func NewDownloadHandler(service service.DownloadService) DownloadHandler {
 	return &downloadHandler{service: service}
 }
 
-func (h *downloadHandler) CreateDownload(c *fiber.Ctx) error {
-	var req model.CreateDownloadRequest
-	if err := c.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
-	}
-
-	if req.URL == "" || req.Type == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "URL and type are required")
-	}
-
-	if err := h.validate1FichierURL(req.URL); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid 1fichier url")
-	}
-
-	downloadType := model.DownloadType(req.Type)
-	if downloadType != model.TypeMovie && downloadType != model.TypeSerie {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid download type")
-	}
-
-	download, err := h.service.CreateDownload(req.URL, downloadType, *req.FileName, *req.FileDir)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(download)
-}
-
+// ListDownloads get paginated downloads with filters
 func (h *downloadHandler) ListDownloads(c *fiber.Ctx) error {
-	status := c.Query("status")
-	downloadType := c.Query("type")
+	status := c.Query("status", "")
+	downloadType := c.Query("type", "")
 	page := c.QueryInt("page", 1)
 	limit := c.QueryInt("limit", 20)
 
@@ -94,7 +85,9 @@ func (h *downloadHandler) ListDownloads(c *fiber.Ctx) error {
 
 	downloads, total, err := h.service.ListDownloads(statusFilters, typeFilters, page, limit)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to list downloads")
+		return errors.HandleError(c,
+			fmt.Errorf("failed to list downloads: status=%s; typeFilters=%s; page=%d; limit=%d; error=%s", statusFilters, typeFilters, page, limit, err.Error()),
+		)
 	}
 
 	totalPages := (total + int64(limit) - 1) / int64(limit)
@@ -110,101 +103,116 @@ func (h *downloadHandler) ListDownloads(c *fiber.Ctx) error {
 	})
 }
 
+// CreateDownload create and start download
+func (h *downloadHandler) CreateDownload(c *fiber.Ctx) error {
+	// Validate request body
+	var req model.CreateDownloadRequest
+	if err := c.BodyParser(&req); err != nil {
+		return errors.HandleBodyParserError(c, err)
+	}
+	// Validate URL
+	urlStr, err := utils.Validate1FichierURL(req.URL)
+	if err != nil {
+		return errors.HandleError(c, errors.BadRequest(err.Error()))
+	}
+	// Validate download type
+	downloadType, err := utils.ValidateType(req.Type)
+	if err != nil {
+		return errors.HandleError(c, errors.BadRequest(err.Error()))
+	}
+	// Validate dirName
+	fileDir, err := utils.ValidateDirName(*req.FileDir)
+	if err != nil {
+		return errors.HandleError(c, errors.BadRequest(err.Error()))
+	}
+	// Validate fileName
+	fileName, err := utils.ValidateFileName(*req.FileName)
+	if err != nil {
+		return errors.HandleError(c, errors.BadRequest(err.Error()))
+	}
+
+	download, err := h.service.CreateDownload(urlStr, downloadType, fileDir, fileName)
+	if err != nil {
+		return errors.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(download)
+}
+
+// PauseDownload pause a download
 func (h *downloadHandler) PauseDownload(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Download ID is required")
+	// Validate id param
+	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
+	if err != nil {
+		return errors.HandleError(c, err)
 	}
 
 	download, err := h.service.PauseDownload(id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusNotFound, "Download not found")
+		return errors.HandleError(c, fmt.Errorf("failed to pause download: %s %s", id, err.Error()))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(download)
 }
 
+// ResumeDownload resume a download
 func (h *downloadHandler) ResumeDownload(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Download ID is required")
+	// Validate id param
+	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
+	if err != nil {
+		return errors.HandleError(c, err)
 	}
 
 	download, err := h.service.ResumeDownload(id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusNotFound, "Download not found")
+		return errors.HandleError(c, fmt.Errorf("failed to resume download: %s %s", id, err.Error()))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(download)
 }
 
+// CancelDownload cancel a download
 func (h *downloadHandler) CancelDownload(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Download ID is required")
+	// Validate id param
+	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
+	if err != nil {
+		return errors.HandleError(c, err)
 	}
 
 	download, err := h.service.CancelDownload(id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusNotFound, "Download not found")
+		return errors.HandleError(c, fmt.Errorf("failed to cancel download: %s %s", id, err.Error()))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(download)
 }
 
+// ArchiveDownload archive a download
 func (h *downloadHandler) ArchiveDownload(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Download ID is required")
+	// Validate id param
+	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
+	if err != nil {
+		return errors.HandleError(c, err)
 	}
 
 	if err := h.service.ArchiveDownload(id); err != nil {
-		return fiber.NewError(fiber.StatusNotFound, "Download not found")
+		return errors.HandleError(c, fmt.Errorf("failed to archive download: %s %s", id, err.Error()))
 	}
 
 	return c.SendStatus(fiber.StatusOK)
 }
 
+// DeleteDownload delete a download
 func (h *downloadHandler) DeleteDownload(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Download ID required")
+	// Validate id param
+	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
+	if err != nil {
+		return errors.HandleError(c, err)
 	}
 
 	if err := h.service.DeleteDownload(id); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return errors.HandleError(c, fmt.Errorf("failed to delete download: %s %s", id, err.Error()))
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
-}
-
-// generateUID génère un simple UID
-func generateUID() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano())
-}
-
-// Valide l'URL 1fichier.com et retourne l'URL parsée
-func (h *downloadHandler) validate1FichierURL(rawURL string) error {
-	// Validation de base - l'URL ne doit pas être vide
-	if strings.TrimSpace(rawURL) == "" {
-		return errors.New("URL vide")
-	}
-
-	// Parse l'URL de manière sécurisée
-	parsedURL, err := url.Parse(rawURL)
-	if err != nil {
-		return errors.New("URL invalide")
-	}
-
-	// Vérifie que c'est bien un domaine 1fichier.com
-	if !strings.HasSuffix(parsedURL.Host, "1fichier.com") {
-		return errors.New("domaine non autorisé")
-	}
-
-	// Vérifie qu'il y a bien une query string
-	if parsedURL.RawQuery == "" {
-		return errors.New("aucun ID trouvé dans l'URL")
-	}
-
-	return nil
 }

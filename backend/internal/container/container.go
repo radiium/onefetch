@@ -1,45 +1,43 @@
-package utils
+package container
 
 import (
+	"dlbackend/internal/database"
 	"dlbackend/internal/handler"
 	"dlbackend/internal/repository"
 	"dlbackend/internal/service"
-	"dlbackend/pkg/config"
-	"dlbackend/pkg/database"
 	"dlbackend/pkg/sse"
 )
 
-type ServiceContainer struct {
-	Config          *config.Config
+// Container holds all application dependencies for dependency injection.
+type Container struct {
 	DB              *database.Database
 	SSEManager      sse.Manager
 	DownloadHandler handler.DownloadHandler
 	SettingsHandler handler.SettingsHandler
-	FileinfoHandler handler.FileinfoHandler
+	FilesHandler    handler.FilesHandler
 }
 
-// NewServiceContainer initialise le container avec toutes les dépendances
-func NewServiceContainer(cfg *config.Config, db *database.Database, sseManager sse.Manager) *ServiceContainer {
+// New creates a Container with all dependencies wired up.
+func New(db *database.Database, sseManager sse.Manager) *Container {
 	// Repositories
 	downloadRepo := repository.NewDownloadRepository(db)
 	settingsRepo := repository.NewSettingsRepository(db)
 
 	// Services
-	downloadService := service.NewDownloadService(downloadRepo, settingsRepo, sseManager)
+	filesService := service.NewFilesService()
+	downloadService := service.NewDownloadService(downloadRepo, settingsRepo, filesService, sseManager)
 	settingsService := service.NewSettingsService(settingsRepo)
-	fileinfoService := service.NewFileinfoService(settingsRepo)
 
 	// Handlers
 	downloadHandler := handler.NewDownloadHandler(downloadService)
 	settingsHandler := handler.NewSettingsHandler(settingsService)
-	fileinfoHandler := handler.NewFileinfoHandler(fileinfoService)
+	filesHandler := handler.NewFilesHandler(filesService)
 
-	return &ServiceContainer{
-		Config:          cfg,
+	return &Container{
 		DB:              db,
 		SSEManager:      sseManager,
 		DownloadHandler: downloadHandler,
 		SettingsHandler: settingsHandler,
-		FileinfoHandler: fileinfoHandler,
+		FilesHandler:    filesHandler,
 	}
 }

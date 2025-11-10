@@ -1,12 +1,13 @@
 package service
 
 import (
+	"dlbackend/internal/config"
+	"dlbackend/internal/errors"
 	"dlbackend/internal/model"
 	"dlbackend/internal/repository"
-	"dlbackend/pkg/filesystem"
+	"dlbackend/pkg/client"
 	"dlbackend/pkg/sse"
 	"dlbackend/pkg/worker"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -19,57 +20,86 @@ import (
 )
 
 type DownloadService interface {
-	CreateDownload(fileURL string, downloadType model.DownloadType, fileName string, fileDir string) (*model.Download, error)
+	GetFileinfo(fileURL string) (*model.DownloadInfoResponse, error)
+	ListDownloads(status []model.DownloadStatus, downloadType []model.DownloadType, page, limit int) ([]model.Download, int64, error)
+	CreateDownload(fileURL string, downloadType model.DownloadType, dirName string, fileName string) (*model.Download, error)
 	PauseDownload(id string) (*model.Download, error)
 	ResumeDownload(id string) (*model.Download, error)
 	CancelDownload(id string) (*model.Download, error)
 	ArchiveDownload(id string) error
-	ListDownloads(status []model.DownloadStatus, downloadType []model.DownloadType, page, limit int) ([]model.Download, int64, error)
 	DeleteDownload(id string) error
 }
 
 type downloadService struct {
 	downloadRepo  repository.DownloadRepository
 	settingsRepo  repository.SettingsRepository
+	filesService  FilesService
 	sseManager    sse.Manager
-	fileManager   filesystem.FileManager
 	workerManager *worker.Manager
 }
 
 func NewDownloadService(
 	downloadRepo repository.DownloadRepository,
 	settingsRepo repository.SettingsRepository,
+	filesService FilesService,
 	sseManager sse.Manager,
 ) DownloadService {
 	return &downloadService{
 		downloadRepo:  downloadRepo,
 		settingsRepo:  settingsRepo,
+		filesService:  filesService,
 		sseManager:    sseManager,
-		fileManager:   filesystem.NewFileManager(),
 		workerManager: worker.NewManager(),
 	}
 }
 
-func (ds *downloadService) CreateDownload(fileURL string, downloadType model.DownloadType, fileName string, fileDir string) (*model.Download, error) {
+func (ds *downloadService) GetFileinfo(fileURL string) (*model.DownloadInfoResponse, error) {
 	settings, err := ds.settingsRepo.Get()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get settings: %w", err)
+		return nil, errors.Internal(fmt.Sprintf("failed to load settings: %v", err))
+	}
+	if settings.APIKey1fichier == "" {
+		return nil, errors.Internal("1fichier API key not configured")
 	}
 
+	oneFichierClient := client.NewOneFichierClient(settings.APIKey1fichier)
+	fileinfo, err := oneFichierClient.GetFileInfo(fileURL)
+	if err != nil {
+		log.Error(err)
+		return nil, errors.Internal("failed to retrieve file info from 1fichier API")
+	}
+
+	dir, err := ds.filesService.GetDir()
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.DownloadInfoResponse{
+		Fileinfo: *fileinfo,
+		Dir:      *dir,
+	}, nil
+}
+
+func (ds *downloadService) ListDownloads(status []model.DownloadStatus, downloadTypes []model.DownloadType, page, limit int) ([]model.Download, int64, error) {
+	return ds.downloadRepo.List(status, downloadTypes, page, limit)
+}
+
+func (ds *downloadService) CreateDownload(fileURL string, downloadType model.DownloadType, customDirName string, customFileName string) (*model.Download, error) {
+	settings, err := ds.settingsRepo.Get()
+	if err != nil {
+		return nil, errors.Internal(fmt.Sprintf("failed to load settings: %v", err))
+	}
 	if settings.APIKey1fichier == "" {
-		return nil, fmt.Errorf("API key not configured")
+		return nil, errors.Internal("1fichier API key not configured")
 	}
 
 	// Extraire l'ID du fichier
 	fileID, err := ds.extract1fichierFileID(fileURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse fileID: %w", err)
+		return nil, errors.BadRequest(err.Error())
 	}
 
-	customFileName := sanitizePathComponent(&fileName)
-	customFileDir := sanitizePathComponent(&fileDir)
-	downloadPath := filepath.Join(settings.DownloadPath, downloadType.Dir(), customFileDir)
-	// downloadPath := utils.BuildCleanPath(settings.DownloadPath)
+	downloadPath := filepath.Join(config.Cfg.DLPath, downloadType.Dir(), customDirName)
 
 	download := &model.Download{
 		ID:             uuid.New().String(),
@@ -92,84 +122,6 @@ func (ds *downloadService) CreateDownload(fileURL string, downloadType model.Dow
 	go ds.startDownload(download, settings.APIKey1fichier)
 
 	return download, nil
-}
-
-func (ds *downloadService) startDownload(download *model.Download, apiKey string) {
-	// Créer le worker
-	w := worker.NewDownloadWorker(download, apiKey, ds.fileManager)
-	ds.workerManager.Add(download.ID, w)
-
-	// Cleanup à la fin
-	defer ds.workerManager.Remove(download.ID)
-
-	// Écouter les mises à jour de progression dans une goroutine
-	go ds.listenProgress(w)
-
-	// Écouter les mises à jour du download dans une goroutine
-	go ds.listenInfoReceived(w)
-
-	// Mettre à jour le statut
-	ds.updateStatus(download.ID, model.StatusRequesting)
-
-	// Démarrer le téléchargement
-	if err := w.Start(); err != nil {
-		// Vérifier si c'était une annulation
-		if w.GetState() == worker.StateCancelled {
-			ds.updateStatus(download.ID, model.StatusCancelled)
-			ds.cleanupTempFile(download)
-			return
-		}
-
-		// Sinon c'est une erreur
-		ds.handleError(download.ID, err.Error())
-		ds.cleanupTempFile(download)
-		return
-	}
-
-	// Téléchargement réussi
-	updatedDownload := w.GetDownload()
-	updatedDownload.Status = model.StatusCompleted
-	ds.downloadRepo.Update(updatedDownload)
-
-	// Envoyer l'événement de complétion
-	ds.sendCompletedEvent(updatedDownload)
-}
-
-func (ds *downloadService) listenProgress(w *worker.DownloadWorker) {
-	for update := range w.ProgressChan() {
-		download := w.GetDownload()
-
-		// Mettre à jour la base de données
-		ds.downloadRepo.UpdateProgress(
-			download.ID,
-			update.Progress,
-			update.BytesWritten,
-			&update.Speed,
-		)
-
-		// Envoyer l'événement SSE
-		sizeStr := fmt.Sprintf("%d", update.TotalBytes)
-		event := &model.DownloadProgressEvent{
-			DownloadID:      download.ID,
-			FileName:        download.FileName,
-			Status:          string(model.StatusDownloading),
-			Progress:        update.Progress,
-			DownloadedBytes: fmt.Sprintf("%d", update.BytesWritten),
-			FileSize:        &sizeStr,
-			Speed:           &update.Speed,
-		}
-
-		if err := ds.sseManager.SendEvent("progress", event); err != nil {
-			log.Error("Failed to send SSE event:", err)
-		}
-	}
-}
-
-// Ajouter cette nouvelle fonction
-func (ds *downloadService) listenInfoReceived(w *worker.DownloadWorker) {
-	for download := range w.InfoReceivedChan() {
-		ds.downloadRepo.Update(download)
-	}
 }
 
 func (ds *downloadService) PauseDownload(id string) (*model.Download, error) {
@@ -218,10 +170,6 @@ func (ds *downloadService) ArchiveDownload(id string) error {
 	return ds.downloadRepo.Update(download)
 }
 
-func (ds *downloadService) ListDownloads(status []model.DownloadStatus, downloadTypes []model.DownloadType, page, limit int) ([]model.Download, int64, error) {
-	return ds.downloadRepo.List(status, downloadTypes, page, limit)
-}
-
 func (ds *downloadService) DeleteDownload(id string) error {
 	// Annuler si en cours
 	ds.workerManager.Cancel(id)
@@ -246,14 +194,90 @@ func (ds *downloadService) DeleteDownload(id string) error {
 
 // Helpers
 
+func (ds *downloadService) startDownload(download *model.Download, apiKey string) {
+	// Créer le worker
+	w := worker.NewDownloadWorker(download, apiKey)
+	ds.workerManager.Add(download.ID, w)
+	defer ds.workerManager.Remove(download.ID)
+
+	// Listen for progress updates
+	go ds.listenProgress(w)
+	// Listen for download infos updates
+	go ds.listenInfoReceived(w)
+
+	// Mettre à jour le statut
+	ds.updateStatus(download.ID, model.StatusRequesting)
+
+	// Start download
+	if err := w.Start(); err != nil {
+		// Check if cancelled
+		if w.GetState() == worker.StateCancelled {
+			ds.updateStatus(download.ID, model.StatusCancelled)
+			ds.cleanupTempFile(download)
+			return
+		}
+
+		// Otherwise, it's an error
+		ds.handleDownloadError(download.ID, err.Error())
+		ds.cleanupTempFile(download)
+		return
+	}
+
+	// Download success
+	updatedDownload := w.GetDownload()
+	updatedDownload.Status = model.StatusCompleted
+	ds.downloadRepo.Update(updatedDownload)
+
+	// Send the completion event
+	ds.sendCompletedEvent(updatedDownload)
+}
+
+func (ds *downloadService) listenProgress(w *worker.DownloadWorker) {
+	for update := range w.ProgressChan() {
+		download := w.GetDownload()
+
+		// Update database
+		ds.downloadRepo.UpdateProgress(
+			download.ID,
+			update.Progress,
+			update.BytesWritten,
+			&update.Speed,
+			model.StatusDownloading,
+		)
+
+		// Send SSE event
+		sizeStr := fmt.Sprintf("%d", update.TotalBytes)
+		event := &model.DownloadProgressEvent{
+			DownloadID:      download.ID,
+			FileName:        download.FileName,
+			CustomFileName:  download.CustomFileName,
+			Status:          string(model.StatusDownloading),
+			Progress:        update.Progress,
+			DownloadedBytes: fmt.Sprintf("%d", update.BytesWritten),
+			FileSize:        &sizeStr,
+			Speed:           &update.Speed,
+		}
+
+		if err := ds.sseManager.SendEvent("progress", event); err != nil {
+			log.Error("Failed to send SSE event:", err)
+		}
+	}
+}
+
+func (ds *downloadService) listenInfoReceived(w *worker.DownloadWorker) {
+	for download := range w.InfoReceivedChan() {
+		ds.downloadRepo.Update(download)
+	}
+}
+
 func (ds *downloadService) updateStatus(id string, status model.DownloadStatus) error {
 	return ds.downloadRepo.UpdateStatus(id, status)
 }
 
-func (ds *downloadService) handleError(id string, message string) {
-	ds.downloadRepo.UpdateStatus(id, model.StatusFailed)
+func (ds *downloadService) handleDownloadError(id string, message string) {
 	download, _ := ds.downloadRepo.GetByID(id)
 	download.ErrorMessage = &message
+	download.Status = model.StatusFailed
 	ds.downloadRepo.Update(download)
 
 	event := &model.DownloadProgressEvent{
@@ -263,7 +287,7 @@ func (ds *downloadService) handleError(id string, message string) {
 	}
 
 	if err := ds.sseManager.SendEvent("progress", event); err != nil {
-		log.Error("Failed to send error event:", err)
+		log.Errorf("failed to send error event: %s %v", download.ID, err)
 	}
 }
 
@@ -283,20 +307,21 @@ func (ds *downloadService) sendCompletedEvent(download *model.Download) {
 	}
 
 	if err := ds.sseManager.SendEvent("progress", event); err != nil {
-		log.Error("Failed to send completion event:", err)
+		log.Errorf("failed to send complete event: %s %v", download.ID, err)
 	}
 }
 
-func (ds *downloadService) cleanupTempFile(download *model.Download) {
+func (ds *downloadService) cleanupTempFile(download *model.Download) error {
 	if download.TempPath != nil && *download.TempPath != "" {
-		ds.fileManager.RemoveFile(*download.TempPath)
+		return os.Remove(*download.TempPath)
 	}
+	return nil
 }
 
 func (ds *downloadService) extract1fichierFileID(rawURL string) (string, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return "", errors.New("URL invalide")
+		return "", fmt.Errorf("invalid URL")
 	}
 
 	queryString := parsedURL.RawQuery
@@ -305,45 +330,16 @@ func (ds *downloadService) extract1fichierFileID(rawURL string) (string, error) 
 
 	validID := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 	if !validID.MatchString(fileID) {
-		return "", errors.New("format d'ID invalide")
+		return "", fmt.Errorf("id invalid format")
 	}
 
 	if len(fileID) > 100 {
-		return "", errors.New("ID trop long")
+		return "", fmt.Errorf("id too long")
 	}
 
 	if len(fileID) == 0 {
-		return "", errors.New("ID vide")
+		return "", fmt.Errorf("id empty")
 	}
 
 	return fileID, nil
-}
-
-// sanitizePathComponent nettoie un composant de chemin
-func sanitizePathComponent(component *string) string {
-
-	if component == nil {
-		return ""
-	}
-
-	comp := *component
-
-	// Caractères interdits sous Linux : / et \0 (null byte)
-	// On ajoute aussi \ pour éviter les problèmes de compatibilité
-	comp = strings.ReplaceAll(comp, "/", "_")
-	comp = strings.ReplaceAll(comp, "\x00", "")
-	comp = strings.ReplaceAll(comp, "\\", "_")
-
-	// Suppression des espaces en début/fin
-	comp = strings.TrimSpace(comp)
-
-	// Remplacement des séquences dangereuses
-	comp = strings.ReplaceAll(comp, "..", "_")
-
-	// Si le composant devient vide après nettoyage, retourner un nom par défaut
-	if comp == "" || comp == "." {
-		comp = ""
-	}
-
-	return comp
 }

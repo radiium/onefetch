@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"dlbackend/internal/database"
 	"dlbackend/internal/model"
-	"dlbackend/pkg/database"
 )
 
 type SettingsRepository interface {

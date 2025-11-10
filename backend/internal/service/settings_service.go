@@ -1,8 +1,10 @@
 package service
 
 import (
+	"dlbackend/internal/errors"
 	"dlbackend/internal/model"
 	"dlbackend/internal/repository"
+	"fmt"
 )
 
 type SettingsService interface {
@@ -19,12 +21,23 @@ func NewSettingsService(repo repository.SettingsRepository) SettingsService {
 }
 
 func (ss *settingsService) GetSettings() (*model.Settings, error) {
-	return ss.repo.Get()
+	settings, err := ss.repo.Get()
+	if err != nil {
+		return nil, errors.Internal(fmt.Sprintf("failed to retrieve settings: %v", err))
+	}
+
+	return settings, nil
 }
 
 func (ss *settingsService) UpdateSettings(settings *model.UpdateSettingsRequest) (*model.Settings, error) {
 	if err := ss.repo.Update(settings); err != nil {
-		return nil, err
+		return nil, errors.Internal(fmt.Sprintf("failed to update settings: %v", err))
 	}
-	return ss.repo.Get()
+
+	updated, err := ss.repo.Get()
+	if err != nil {
+		return nil, errors.Internal(fmt.Sprintf("failed to retrieve settings: %v", err))
+	}
+
+	return updated, nil
 }

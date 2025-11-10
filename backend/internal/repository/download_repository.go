@@ -1,17 +1,17 @@
 package repository
 
 import (
+	"dlbackend/internal/database"
 	"dlbackend/internal/model"
-	"dlbackend/pkg/database"
 )
 
 type DownloadRepository interface {
+	List(status []model.DownloadStatus, downloadTypes []model.DownloadType, page, limit int) ([]model.Download, int64, error)
 	Create(download *model.Download) error
 	GetByID(id string) (*model.Download, error)
 	Update(download *model.Download) error
 	UpdateStatus(id string, status model.DownloadStatus) error
-	UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64) error
-	List(status []model.DownloadStatus, downloadTypes []model.DownloadType, page, limit int) ([]model.Download, int64, error)
+	UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64, status model.DownloadStatus) error
 	GetActive() ([]model.Download, error)
 	Delete(id string) error
 }
@@ -22,32 +22,6 @@ type downloadRepository struct {
 
 func NewDownloadRepository(db *database.Database) DownloadRepository {
 	return &downloadRepository{db: db}
-}
-
-func (r *downloadRepository) Create(download *model.Download) error {
-	return r.db.Create(download).Error
-}
-
-func (r *downloadRepository) GetByID(id string) (*model.Download, error) {
-	var download model.Download
-	err := r.db.Where("id = ?", id).First(&download).Error
-	return &download, err
-}
-
-func (r *downloadRepository) Update(download *model.Download) error {
-	return r.db.Save(download).Error
-}
-
-func (r *downloadRepository) UpdateStatus(id string, status model.DownloadStatus) error {
-	return r.db.Model(&model.Download{}).Where("id = ?", id).Update("status", status).Error
-}
-
-func (r *downloadRepository) UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64) error {
-	return r.db.Model(&model.Download{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"progress":         progress,
-		"downloaded_bytes": downloadedBytes,
-		"speed":            speed,
-	}).Error
 }
 
 func (r *downloadRepository) List(status []model.DownloadStatus, downloadTypes []model.DownloadType, page, limit int) ([]model.Download, int64, error) {
@@ -82,6 +56,33 @@ func (r *downloadRepository) GetActive() ([]model.Download, error) {
 		model.StatusDownloading,
 	}).Find(&downloads).Error
 	return downloads, err
+}
+
+func (r *downloadRepository) Create(download *model.Download) error {
+	return r.db.Create(download).Error
+}
+
+func (r *downloadRepository) GetByID(id string) (*model.Download, error) {
+	var download model.Download
+	err := r.db.Where("id = ?", id).First(&download).Error
+	return &download, err
+}
+
+func (r *downloadRepository) Update(download *model.Download) error {
+	return r.db.Save(download).Error
+}
+
+func (r *downloadRepository) UpdateStatus(id string, status model.DownloadStatus) error {
+	return r.db.Model(&model.Download{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (r *downloadRepository) UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64, status model.DownloadStatus) error {
+	return r.db.Model(&model.Download{}).Where("id = ?", id).Updates(map[string]any{
+		"progress":         progress,
+		"downloaded_bytes": downloadedBytes,
+		"speed":            speed,
+		"status":           status,
+	}).Error
 }
 
 func (r *downloadRepository) Delete(id string) error {
