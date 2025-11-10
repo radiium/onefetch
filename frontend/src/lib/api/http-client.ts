@@ -5,7 +5,7 @@ interface RequestConfig<TParams = Params> extends RequestInit {
 	params?: TParams;
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
 	constructor(
 		public status: number,
 		public statusText: string,
@@ -24,7 +24,7 @@ class HttpError extends Error {
 	}
 }
 
-class NetworkError extends Error {
+export class NetworkError extends Error {
 	constructor(
 		message: string,
 		public originalError?: Error

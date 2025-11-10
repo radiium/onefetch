@@ -1,10 +1,11 @@
 import { browser } from '$app/environment';
+import type { FSNode } from '$lib/state/files-state.svelte';
 import type {
 	CreateDownloadInput,
 	Download,
 	DownloadFilters,
 	DownloadPage,
-	FileinfoResponse,
+	DownloadInfoResponse,
 	Settings
 } from '../types/types';
 import { HttpClient } from './http-client';
@@ -22,12 +23,21 @@ export const api = {
 			return http.patch('/api/settings', settings);
 		}
 	},
-	fileinfo: {
-		async get(url?: string): Promise<FileinfoResponse> {
-			return http.get('/api/fileinfo', { params: { url } });
+	files: {
+		async get(): Promise<FSNode> {
+			return http.get('/api/files');
+		},
+		async create(body?: { path?: string; dirname?: string }): Promise<FSNode> {
+			return http.post('/api/files', body);
+		},
+		async delete(path?: string): Promise<FSNode> {
+			return http.delete('/api/files', { params: { path } });
 		}
 	},
 	download: {
+		async getInfos(url?: string): Promise<DownloadInfoResponse> {
+			return http.get('/api/downloads/infos', { params: { url } });
+		},
 		async getAll(params?: DownloadFilters): Promise<DownloadPage> {
 			return http.get('/api/downloads', { params });
 		},

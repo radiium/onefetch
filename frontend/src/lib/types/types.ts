@@ -1,3 +1,5 @@
+import type { FSNode } from '$lib/state/files-state.svelte';
+
 export enum DownloadStatus {
 	PENDING = 'PENDING',
 	REQUESTING = 'REQUESTING',
@@ -16,6 +18,7 @@ export enum DownloadType {
 export interface Download {
 	id: string;
 	fileName: string;
+	customFileName?: string;
 	fileUrl: string;
 	type: DownloadType;
 	status: DownloadStatus;
@@ -53,6 +56,7 @@ export interface DownloadFilters {
 export interface DownloadProgressEvent {
 	downloadId: string;
 	fileName: string;
+	customFileName?: string;
 	status: DownloadStatus;
 	progress: number;
 	downloadedBytes: string;
@@ -85,7 +89,7 @@ export interface Fileinfo {
 	folder_id: string;
 }
 
-export interface FileinfoResponse {
+export interface DownloadInfoResponse {
 	fileinfo: Fileinfo;
-	directories: Record<DownloadType, string[]>;
+	dir: FSNode;
 }

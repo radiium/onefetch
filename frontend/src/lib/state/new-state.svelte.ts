@@ -6,8 +6,9 @@ import {
 	type CreateDownloadInput,
 	type Download,
 	type Fileinfo,
-	type FileinfoResponse
+	type DownloadInfoResponse
 } from '$lib/types/types';
+import type { FSNode } from './files-state.svelte';
 
 export type FormState = {
 	url: string;
@@ -41,10 +42,7 @@ export const createNewState = () => {
 	});
 
 	let fileinfo = $state<Fileinfo | null>(null);
-	let directories = $state<Record<DownloadType, string[]>>({
-		[DownloadType.MOVIE]: [],
-		[DownloadType.SERIE]: []
-	});
+	let dir = $state<FSNode|null>(null);
 	const pathPreview = $derived(
 		['downloads', formState.type.toLowerCase() + 's', formState.fileDir.trim(), formState.fileName]
 			.filter(Boolean)
@@ -54,13 +52,13 @@ export const createNewState = () => {
 			.replaceAll('//', '/')
 	);
 
-	const getState = useAsyncState<FileinfoResponse, string>(
-		api.fileinfo.get, //
+	const getState = useAsyncState<DownloadInfoResponse, string>(
+		api.download.getInfos, //
 		{
 			immediate: false,
 			onSuccess(value): void {
 				fileinfo = value.fileinfo;
-				directories = value.directories
+				dir = value.dir
 				formState.fileName = fileinfo.filename;
 			}
 		}
@@ -126,8 +124,8 @@ export const createNewState = () => {
 			return fileinfo;
 		},
 		// Directories
-		get directories() {
-			return directories[formState.type] ?? [];
+		get dir() {
+			return dir;
 		},
 		// RullPath
 		get pathPreview() {
@@ -135,10 +133,11 @@ export const createNewState = () => {
 		},
 		// States
 		get loading() {
-			return getState.loading;
+			return getState.loading || createState.loading;
+
 		},
 		get error() {
-			return getState.error;
+			return getState.error || createState.error;
 		},
 		isValid1FichierUrl,
 		create: () => {

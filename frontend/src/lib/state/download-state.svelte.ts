@@ -88,6 +88,7 @@ export const createDownloadState = () => {
 						if (index !== -1) {
 							downloads[index].status = progress.status;
 							downloads[index].fileName = progress.fileName;
+							downloads[index].customFileName = progress.customFileName;
 							downloads[index].progress = progress.progress;
 							downloads[index].speed = progress.speed;
 							downloads[index].fileSize = progress.fileSize;
