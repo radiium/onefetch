@@ -5,6 +5,7 @@ import (
 	"dlbackend/internal/errors"
 	"dlbackend/internal/model"
 	"dlbackend/internal/repository"
+	"dlbackend/internal/utils"
 	"dlbackend/pkg/client"
 	"dlbackend/pkg/sse"
 	"dlbackend/pkg/worker"
@@ -69,14 +70,24 @@ func (ds *downloadService) GetFileinfo(fileURL string) (*model.DownloadInfoRespo
 		return nil, errors.Internal("failed to retrieve file info from 1fichier API")
 	}
 
-	dir, err := ds.filesService.GetDir()
+	moviePath := filepath.Join(config.Cfg.DLPath, model.TypeMovie.Dir())
+	movieDirectories, err := utils.BuildDirTreeAsList(moviePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Get movies directories error: %w", err)
+	}
+
+	seriePath := filepath.Join(config.Cfg.DLPath, model.TypeSerie.Dir())
+	serieDirectories, err := utils.BuildDirTreeAsList(seriePath)
+	if err != nil {
+		return nil, fmt.Errorf("Get series directories error: %w", err)
 	}
 
 	return &model.DownloadInfoResponse{
 		Fileinfo: *fileinfo,
-		Dir:      *dir,
+		Directories: map[model.DownloadType][]string{
+			model.TypeMovie: movieDirectories,
+			model.TypeSerie: serieDirectories,
+		},
 	}, nil
 }
 

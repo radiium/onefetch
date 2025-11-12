@@ -87,6 +87,6 @@ type DownloadProgressEvent struct {
 }
 
 type DownloadInfoResponse struct {
-	Fileinfo client.OneFichierInfoResponse `json:"fileinfo"`
-	Dir      FSNode                        `json:"dir"`
+	Fileinfo    client.OneFichierInfoResponse `json:"fileinfo"`
+	Directories map[DownloadType][]string     `json:"directories"`
 }

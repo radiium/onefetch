@@ -3,6 +3,8 @@ package utils
 import (
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -119,87 +121,195 @@ func TestMoveFile(t *testing.T) {
 	}
 }
 
-func TestGetDirectories(t *testing.T) {
+func TestSamePath(t *testing.T) {
+	// Créer un répertoire temporaire pour les tests
+	tmpDir, err := os.MkdirTemp("", "samepath_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Créer des fichiers et dossiers de test
+	testFile := filepath.Join(tmpDir, "test.txt")
+	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	testDir := filepath.Join(tmpDir, "testdir")
+	if err := os.Mkdir(testDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Créer un lien symbolique
+	linkFile := filepath.Join(tmpDir, "link.txt")
+	if err := os.Symlink(testFile, linkFile); err != nil {
+		t.Logf("Symlink creation skipped: %v", err)
+	}
+
 	tests := []struct {
-		name     string
-		setup    func(t *testing.T) string
-		wantDirs []string
-		wantErr  bool
+		name    string
+		path1   string
+		path2   string
+		want    bool
+		wantErr bool
 	}{
 		{
-			name: "get directories from path with multiple folders",
-			setup: func(t *testing.T) string {
-				tmpDir := t.TempDir()
-
-				// Create directories
-				os.Mkdir(filepath.Join(tmpDir, "dir1"), 0755)
-				os.Mkdir(filepath.Join(tmpDir, "dir2"), 0755)
-				os.Mkdir(filepath.Join(tmpDir, "dir3"), 0755)
-
-				// Create files (should be ignored)
-				os.WriteFile(filepath.Join(tmpDir, "file1.txt"), []byte("content"), 0644)
-				os.WriteFile(filepath.Join(tmpDir, "file2.txt"), []byte("content"), 0644)
-
-				return tmpDir
-			},
-			wantDirs: []string{"dir1", "dir2", "dir3"},
-			wantErr:  false,
+			name:  "chemins identiques absolus",
+			path1: testFile,
+			path2: testFile,
+			want:  true,
 		},
 		{
-			name: "empty directory",
-			setup: func(t *testing.T) string {
-				return t.TempDir()
-			},
-			wantDirs: []string{},
-			wantErr:  false,
+			name:  "même fichier avec ./",
+			path1: testFile,
+			path2: "./" + testFile,
+			want:  false,
 		},
 		{
-			name: "directory with only files",
-			setup: func(t *testing.T) string {
-				tmpDir := t.TempDir()
-				os.WriteFile(filepath.Join(tmpDir, "file1.txt"), []byte("content"), 0644)
-				os.WriteFile(filepath.Join(tmpDir, "file2.txt"), []byte("content"), 0644)
-				return tmpDir
-			},
-			wantDirs: []string{},
-			wantErr:  false,
+			name:  "même fichier avec ../",
+			path1: testFile,
+			path2: filepath.Join(tmpDir, "..", filepath.Base(tmpDir), "test.txt"),
+			want:  true,
 		},
 		{
-			name: "nonexistent directory",
-			setup: func(t *testing.T) string {
-				return filepath.Join(t.TempDir(), "nonexistent")
-			},
-			wantDirs: nil,
-			wantErr:  true,
+			name:  "fichiers différents",
+			path1: testFile,
+			path2: filepath.Join(tmpDir, "other.txt"),
+			want:  false,
+		},
+		{
+			name:  "dossiers identiques",
+			path1: testDir,
+			path2: testDir,
+			want:  true,
+		},
+		{
+			name:  "fichier vs dossier",
+			path1: testFile,
+			path2: testDir,
+			want:  false,
+		},
+		{
+			name:  "lien symbolique vers même fichier",
+			path1: testFile,
+			path2: linkFile,
+			want:  true,
+		},
+		{
+			name:  "chemin avec /.",
+			path1: testFile,
+			path2: testFile + "/.",
+			want:  true,
+		},
+		{
+			name:    "fichier inexistant",
+			path1:   filepath.Join(tmpDir, "nonexistent1.txt"),
+			path2:   filepath.Join(tmpDir, "nonexistent2.txt"),
+			want:    false,
+			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := tt.setup(t)
-
-			got, err := GetDirectories(path)
+			got, err := SamePath(tt.path1, tt.path2)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetDirectories() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SamePath() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			if got != tt.want {
+				t.Errorf("SamePath() = %v, want %v", got, tt.want)
+				t.Logf("path1: %s", tt.path1)
+				t.Logf("path2: %s", tt.path2)
+			}
+		})
+	}
+}
 
-			if !tt.wantErr {
-				if len(got) != len(tt.wantDirs) {
-					t.Errorf("GetDirectories() got %d directories, want %d", len(got), len(tt.wantDirs))
-					return
+func TestValidatePathSafety(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "test_validate_path")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	testFile := filepath.Join(tmpDir, "test.txt")
+	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	tests := []struct {
+		name        string
+		setup       func() string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:    "valid absolute path",
+			setup:   func() string { return testFile },
+			wantErr: false,
+		},
+		{
+			name: "valid relative path",
+			setup: func() string {
+				rel, _ := filepath.Rel(".", testFile)
+				return rel
+			},
+			wantErr: false,
+		},
+		{
+			name:    "path with dots gets cleaned",
+			setup:   func() string { return filepath.Join(tmpDir, ".", "test.txt") },
+			wantErr: false,
+		},
+		{
+			name:    "path with double dots gets cleaned",
+			setup:   func() string { return filepath.Join(tmpDir, "subdir", "..", "test.txt") },
+			wantErr: false,
+		},
+		{
+			name:    "non-existent path is allowed",
+			setup:   func() string { return filepath.Join(tmpDir, "nonexistent.txt") },
+			wantErr: false,
+		},
+		{
+			name: "symlink is rejected",
+			setup: func() string {
+				if runtime.GOOS == "windows" {
+					t.Skip("Skipping symlink test on Windows")
 				}
-
-				// Convert to map for easier comparison
-				gotMap := make(map[string]bool)
-				for _, dir := range got {
-					gotMap[dir] = true
+				symlinkPath := filepath.Join(tmpDir, "symlink.txt")
+				if err := os.Symlink(testFile, symlinkPath); err != nil {
+					t.Fatalf("Failed to create symlink: %v", err)
 				}
+				return symlinkPath
+			},
+			wantErr:     true,
+			errContains: "symlinks are not allowed",
+		},
+	}
 
-				for _, wantDir := range tt.wantDirs {
-					if !gotMap[wantDir] {
-						t.Errorf("GetDirectories() missing directory: %s", wantDir)
-					}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := tt.setup()
+			result, err := ValidatePathSafety(path)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("expected error but got none")
+				}
+				if tt.errContains != "" && err != nil && !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("error = %v, should contain %v", err, tt.errContains)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error = %v", err)
+				}
+				if result == "" {
+					t.Errorf("returned empty path")
+				}
+				if !filepath.IsAbs(result) {
+					t.Errorf("result is not absolute: %v", result)
 				}
 			}
 		})

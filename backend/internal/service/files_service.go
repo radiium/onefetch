@@ -32,10 +32,10 @@ func (fs *filesService) GetDir() (*model.FSNode, error) {
 
 func (fs *filesService) CreateDir(path string, dirName string) (*model.FSNode, error) {
 	// Validate parent path
-	absPath, err := fs.buildAbsPath(path)
+	absPath, err := fs.buildAbsPathForCreate(path)
 	if err != nil {
 		log.Error(err)
-		return nil, errors.BadRequest(fmt.Sprintf("invalid parent path: %s", path))
+		return nil, errors.BadRequest(fmt.Sprintf("invalid parent path: %s", err.Error()))
 	}
 
 	// Build new directory path
@@ -52,7 +52,7 @@ func (fs *filesService) CreateDir(path string, dirName string) (*model.FSNode, e
 	}
 
 	// Verify created path is safe (defense in depth)
-	if _, err := fs.buildAbsPath(newDirPath); err != nil {
+	if _, err := fs.buildAbsPathForCreate(newDirPath); err != nil {
 		// Rollback: delete the created directory
 		os.RemoveAll(newDirPath)
 		return nil, errors.Forbidden("security check failed after directory creation")
@@ -63,10 +63,10 @@ func (fs *filesService) CreateDir(path string, dirName string) (*model.FSNode, e
 
 func (fs *filesService) DeleteDir(path string) (*model.FSNode, error) {
 	// Validate and obtain the absolute path (includes symlink check)
-	absPath, err := fs.buildAbsPath(path)
+	absPath, err := fs.buildAbsPathForDelete(path)
 	if err != nil {
 		log.Error(err)
-		return nil, errors.BadRequest(fmt.Sprintf("invalid path: %s", path))
+		return nil, errors.BadRequest(fmt.Sprintf("invalid path: %s", err.Error()))
 	}
 
 	// Verify that the path exists
@@ -89,7 +89,7 @@ func (fs *filesService) DeleteDir(path string) (*model.FSNode, error) {
 
 // getDirTree retrieves the complete directory tree and handles errors
 func (fs *filesService) getDirTree() (*model.FSNode, error) {
-	tree, err := fs.buildDirTree(config.Cfg.DLPath)
+	tree, err := utils.BuildDirTree(config.Cfg.DLPath)
 	if err != nil {
 		log.Error(err)
 		return nil, errors.Internal(fmt.Sprintf("failed to get directory tree: %v", err))
@@ -97,72 +97,52 @@ func (fs *filesService) getDirTree() (*model.FSNode, error) {
 	return &tree, nil
 }
 
-// buildDirTree generates a tree representation of the file system for a given path
-func (vs *filesService) buildDirTree(root string) (model.FSNode, error) {
-	info, err := os.Lstat(root)
-	if err != nil {
-		return model.FSNode{}, err
-	}
-
-	// Reject symlinks
-	if info.Mode()&os.ModeSymlink != 0 {
-		return model.FSNode{}, fmt.Errorf("symlinks are not allowed")
-	}
-
-	node := model.FSNode{
-		Name:  info.Name(),
-		Path:  root,
-		IsDir: info.IsDir(),
-	}
-
-	if info.IsDir() {
-		entries, err := os.ReadDir(root)
-		if err != nil {
-			return node, err
-		}
-
-		for _, entry := range entries {
-			// Ignore symlinks in the directory tree
-			if entry.Type()&os.ModeSymlink != 0 {
-				continue
-			}
-
-			childPath := filepath.Join(root, entry.Name())
-			childNode, err := vs.buildDirTree(childPath)
-			if err == nil {
-				node.Children = append(node.Children, childNode)
-			}
-		}
-	}
-
-	return node, nil
-}
-
-// buildAbsPath generate the absolute path
-// and verify that it is contained within one of the authorized folders.
-func (fs *filesService) buildAbsPath(path string) (string, error) {
-	// Authorized directories
-	allowedDirs := []string{
+// getAllowedDirs returns the list of authorized directories
+func (fs *filesService) getAllowedDirs() []string {
+	return []string{
 		filepath.Join(config.Cfg.DLPath, model.TypeMovie.Dir()),
 		filepath.Join(config.Cfg.DLPath, model.TypeSerie.Dir()),
 	}
+}
 
-	// Get the absolute path and clean it
-	absPath, err := filepath.Abs(filepath.Clean(path))
+// buildAbsPathForCreate generates the absolute path for directory creation
+// Allows creation directly in allowed directories or their subdirectories
+func (fs *filesService) buildAbsPathForCreate(path string) (string, error) {
+	absPath, err := utils.ValidatePathSafety(path)
 	if err != nil {
-		return "", fmt.Errorf("invalid path: %w", err)
+		return "", err
 	}
 
-	// Check that it is not a symlink (if it exists)
-	info, err := os.Lstat(absPath)
-	if err == nil {
-		if info.Mode()&os.ModeSymlink != 0 {
-			return "", fmt.Errorf("symlinks are not allowed")
+	// Verify path is allowed dir OR subdirectory of allowed dir
+	for _, dir := range fs.getAllowedDirs() {
+		absAllowed, err := filepath.Abs(dir)
+		if err != nil {
+			continue
+		}
+
+		// Allow exact match OR subdirectory
+		if absPath == absAllowed {
+			return absPath, nil
+		}
+
+		allowedPrefix := absAllowed + string(os.PathSeparator)
+		if strings.HasPrefix(absPath+string(os.PathSeparator), allowedPrefix) {
+			return absPath, nil
 		}
 	}
 
+	return "", fmt.Errorf("path outside allowed directories")
+}
+
+// buildAbsPath generates the absolute path and verifies it's a subdirectory of allowed dirs
+func (fs *filesService) buildAbsPathForDelete(path string) (string, error) {
+	absPath, err := utils.ValidatePathSafety(path)
+	if err != nil {
+		return "", err
+	}
+
 	// Verify that the path is a subdirectory of an allowed directory
-	for _, dir := range allowedDirs {
+	for _, dir := range fs.getAllowedDirs() {
 		absAllowed, err := filepath.Abs(dir)
 		if err != nil {
 			continue
@@ -175,5 +155,45 @@ func (fs *filesService) buildAbsPath(path string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("unauthorized: path outside allowed directories")
+	return "", fmt.Errorf("path outside allowed directories")
 }
+
+// buildAbsPath generate the absolute path
+// and verify that it is contained within one of the authorized folders.
+// func (fs *filesService) buildAbsPath(path string) (string, error) {
+// 	// Authorized directories
+// 	allowedDirs := []string{
+// 		filepath.Join(config.Cfg.DLPath, model.TypeMovie.Dir()),
+// 		filepath.Join(config.Cfg.DLPath, model.TypeSerie.Dir()),
+// 	}
+
+// 	// Get the absolute path and clean it
+// 	absPath, err := filepath.Abs(filepath.Clean(path))
+// 	if err != nil {
+// 		return "", fmt.Errorf("invalid path: %w", err)
+// 	}
+
+// 	// Check that it is not a symlink (if it exists)
+// 	info, err := os.Lstat(absPath)
+// 	if err == nil {
+// 		if info.Mode()&os.ModeSymlink != 0 {
+// 			return "", fmt.Errorf("symlinks are not allowed")
+// 		}
+// 	}
+
+// 	// Verify that the path is a subdirectory of an allowed directory
+// 	for _, dir := range allowedDirs {
+// 		absAllowed, err := filepath.Abs(dir)
+// 		if err != nil {
+// 			continue
+// 		}
+
+// 		// Ensure both paths end with separator for accurate prefix matching
+// 		allowedPrefix := absAllowed + string(os.PathSeparator)
+// 		if strings.HasPrefix(absPath+string(os.PathSeparator), allowedPrefix) && absPath != absAllowed {
+// 			return absPath, nil
+// 		}
+// 	}
+
+// 	return "", fmt.Errorf("path outside allowed directories")
+// }

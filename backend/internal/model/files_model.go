@@ -2,10 +2,11 @@ package model
 
 // Structure représentant un élément du tree
 type FSNode struct {
-	Name     string   `json:"name"`
-	Path     string   `json:"path"`
-	IsDir    bool     `json:"isDir"`
-	Children []FSNode `json:"children,omitempty"`
+	Name       string   `json:"name"`
+	Path       string   `json:"path"`
+	IsDir      bool     `json:"isDir"`
+	IsReadOnly bool     `json:"isReadOnly"`
+	Children   []FSNode `json:"children,omitempty"`
 }
 
 type CreateDirRequest struct {

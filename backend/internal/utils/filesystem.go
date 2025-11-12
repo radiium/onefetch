@@ -31,20 +31,66 @@ func MoveFile(src, dst string) error {
 	return nil
 }
 
-// GetDirectories returns a list of folders in the specified path
-func GetDirectories(path string) ([]string, error) {
-	var directories []string
-
-	entries, err := os.ReadDir(path)
+// SamePath vérifie si deux chemins (relatifs ou absolus) pointent vers le même fichier/dossier
+func SamePath(path1, path2 string) (bool, error) {
+	// Convertir les deux chemins en chemins absolus
+	abs1, err := filepath.Abs(path1)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read directory '%s': %w", path, err)
+		return false, err
 	}
 
-	for _, entry := range entries {
-		if entry.IsDir() {
-			directories = append(directories, entry.Name())
+	abs2, err := filepath.Abs(path2)
+	if err != nil {
+		return false, err
+	}
+
+	// Nettoyer les chemins (résoudre .. et . et normaliser les séparateurs)
+	clean1 := filepath.Clean(abs1)
+	clean2 := filepath.Clean(abs2)
+
+	// Comparer les chemins nettoyés
+	if clean1 == clean2 {
+		return true, nil
+	}
+
+	// Pour une vérification plus robuste, on peut aussi utiliser os.SameFile
+	// qui compare les inodes sur Unix et les file IDs sur Windows
+	info1, err := os.Stat(clean1)
+	if err != nil {
+		// Si le fichier n'existe pas, on se fie à la comparaison des chemins
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	info2, err := os.Stat(clean2)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	// Utiliser os.SameFile pour la comparaison physique
+	return os.SameFile(info1, info2), nil
+}
+
+// validatePathSafety performs common security checks on a path
+func ValidatePathSafety(path string) (string, error) {
+	// Get the absolute path and clean it
+	absPath, err := filepath.Abs(filepath.Clean(path))
+	if err != nil {
+		return "", fmt.Errorf("invalid path: %w", err)
+	}
+
+	// Check that it is not a symlink (if it exists)
+	info, err := os.Lstat(absPath)
+	if err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return "", fmt.Errorf("symlinks are not allowed")
 		}
 	}
 
-	return directories, nil
+	return absPath, nil
 }
