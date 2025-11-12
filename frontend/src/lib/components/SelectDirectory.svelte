@@ -14,7 +14,7 @@
 </script>
 
 <Floating
-	size="1"
+	size="2"
 	variant="outline"
 	placement="bottom-end"
 	offset={4}
@@ -29,7 +29,7 @@
 		</Button>
 	{/snippet}
 	{#snippet content()}
-		<Flexbox direction="column" align="center" style="min-width: 250px">
+		<Flexbox direction="column" gap="1" align="center" style="min-width: 250px">
 			{#each options as opt}
 				<Button
 					variant="clear"
