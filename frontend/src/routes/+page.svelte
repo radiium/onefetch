@@ -1,9 +1,11 @@
 <script lang="ts">
 	import PageLayout from '$lib/components/PageLayout.svelte';
+	import SelectDirectory from '$lib/components/SelectDirectory.svelte';
 	import { createNewState } from '$lib/state/new-state.svelte';
 	import { DownloadType } from '$lib/types/types';
 	import { useClipboard } from '$lib/utils/clipboard.svelte';
 	import { formatBytes } from '$lib/utils/format-bytes';
+	import { Folder } from 'phosphor-svelte';
 	import Database from 'phosphor-svelte/lib/Database';
 	import FileArrowDown from 'phosphor-svelte/lib/FileArrowDown';
 	import Play from 'phosphor-svelte/lib/Play';
@@ -108,13 +110,15 @@
 								disabled={newState.loading}
 							/>
 
-							<!-- <SelectDirectory
-								options={newState.directories}
-								disabled={newState.directories.length === 0}
-								onSelect={(dir) => (newState.fileDir = dir)}
-							>
-								<Folder />
-							</SelectDirectory> -->
+							{#if newState.directories.length}
+								<SelectDirectory
+									options={newState.directories}
+									disabled={newState.directories.length === 0}
+									onSelect={(dir) => (newState.fileDir = dir)}
+								>
+									<Folder />
+								</SelectDirectory>
+							{/if}
 						</Flexbox>
 					</Flexbox>
 

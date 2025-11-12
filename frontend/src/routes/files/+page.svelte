@@ -1,9 +1,10 @@
 <script lang="ts">
+	import FSNodeItem from '$lib/components/FSNodeItem.svelte';
 	import PageLayout from '$lib/components/PageLayout.svelte';
-	import { createFilesState, type FSNode } from '$lib/state/files-state.svelte';
+	import { createFilesState } from '$lib/state/files-state.svelte';
+	import type { FSNode } from '$lib/types/types';
 	import { onMount } from 'svelte';
-	import { Button, clickOutsideAction, Dialog, Flexbox, Input, Panel } from 'svxui';
-	import FSNodeItem from './FSNodeItem.svelte';
+	import { Button, clickOutsideAction, Dialog, Flexbox, Input } from 'svxui';
 
 	const fileState = createFilesState();
 	onMount(fileState.get);
@@ -60,12 +61,6 @@
 			/>
 		{/if}
 	</div>
-
-	<Panel>
-		{#if current}
-			{current.name}
-		{/if}
-	</Panel>
 </PageLayout>
 
 <Dialog bind:isOpen={newIsOpen} width="500px" maxWidth="90vw" closeOnBackdropClick closeOnEscape>
