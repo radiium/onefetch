@@ -1,12 +1,6 @@
 import { api } from '$lib/api/api.svelte';
 import { useAsyncState } from '$lib/api/use-async-state.svelte';
-
-export type FSNode = {
-	name: string;
-	path: string;
-	isDir: boolean;
-	children: FSNode[];
-};
+import type { FSNode } from '$lib/types/types';
 
 export const createFilesState = () => {
 	let data = $state<FSNode | null>(null);
