@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { Button, Flexbox, Floating } from 'svxui';
+	import { Button, Flexbox, Floating, Text } from 'svxui';
 
 	type Props = {
 		options: string[];
@@ -17,10 +17,13 @@
 	size="2"
 	variant="outline"
 	placement="bottom-end"
-	offset={4}
 	autoUpdate
+	offset={4}
 	flip
 	closeOnClickOutside
+	closeOnScroll
+	closeOnEscape
+	closeOnResize
 	bind:isOpen
 >
 	{#snippet trigger()}
@@ -35,10 +38,15 @@
 					variant="clear"
 					align="start"
 					fullWidth
-					onclick={() => onSelect?.(opt)}
+					onclick={() => {
+						isOpen = false;
+						onSelect?.(opt);
+					}}
 					style="--button-background-hover: var(--accent-5);"
 				>
-					{opt}
+					<Text wrap="nowrap">
+						{opt}
+					</Text>
 				</Button>
 			{/each}
 		</Flexbox>

@@ -3,7 +3,7 @@
 	import { createSettingsState } from '$lib/state/settings-state.svelte';
 	import Check from 'phosphor-svelte/lib/Check';
 	import { onMount } from 'svelte';
-	import { Button, Flexbox, Input, Panel, Text } from 'svxui';
+	import { Button, Flexbox, Input, Panel } from 'svxui';
 
 	const settingsState = createSettingsState();
 	onMount(settingsState.get);

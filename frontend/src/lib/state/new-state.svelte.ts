@@ -1,4 +1,5 @@
 import { goto } from '$app/navigation';
+import { resolve } from '$app/paths';
 import { api } from '$lib/api/api.svelte';
 import { useAsyncState } from '$lib/api/use-async-state.svelte';
 import {
@@ -8,6 +9,7 @@ import {
 	type DownloadInfoResponse,
 	type Fileinfo
 } from '$lib/types/types';
+import { isValid1FichierUrl } from '$lib/utils/is-valid-1fichier-url';
 
 export type FormState = {
 	url: string;
@@ -15,22 +17,6 @@ export type FormState = {
 	fileName: string;
 	fileDir: string;
 };
-
-function isValid1FichierUrl(url?: string): boolean {
-	// Vérification basique du type
-	if (typeof url !== 'string' || url.length === 0) {
-		return false;
-	}
-
-	// Pattern regex pour valider le format
-	// ^ = début de chaîne
-	// https:\/\/1fichier\.com\/\? = URL exacte
-	// [a-z0-9]+ = code alphanumérique (lettres minuscules et chiffres)
-	// $ = fin de chaîne
-	const pattern = /^https:\/\/1fichier\.com\/\?[a-z0-9]+$/;
-
-	return pattern.test(url);
-}
 
 export const createNewState = () => {
 	let formState = $state<FormState>({
@@ -72,8 +58,7 @@ export const createNewState = () => {
 		{
 			immediate: false,
 			onSuccess() {
-				// eslint-disable-next-line svelte/no-navigation-without-resolve
-				goto('/download?test=test').then(() => {
+				goto(resolve('/active')).then(() => {
 					formState = {
 						url: '',
 						type: DownloadType.MOVIE,

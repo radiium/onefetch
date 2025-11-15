@@ -1,6 +1,6 @@
 <script lang="ts">
 	import CaretDown from 'phosphor-svelte/lib/CaretDown';
-	import type { Snippet } from 'svelte';
+	import Funnel from 'phosphor-svelte/lib/Funnel';
 	import {
 		Badge,
 		Button,
@@ -13,20 +13,20 @@
 	} from 'svxui';
 
 	type Props = {
+		name: string;
 		value?: string[] | null;
 		options: string[];
 		floatingProps?: Partial<FloatingProps>;
 		buttonOptionProps?: Partial<ButtonProps>;
 		buttonProps?: Partial<ButtonProps>;
-		buttonContent: Snippet;
 	};
 	let {
+		name,
 		value = $bindable(),
 		options = [],
 		floatingProps,
 		buttonOptionProps,
 		buttonProps,
-		buttonContent
 	}: Props = $props();
 
 	let isOpen = $state(false);
@@ -57,14 +57,17 @@
 	bind:isOpen
 >
 	{#snippet trigger()}
-		<Button size="3" variant="outline" {...buttonProps} onclick={() => (isOpen = !isOpen)}>
+		<Button size="2" variant="outline" {...buttonProps} onclick={() => (isOpen = !isOpen)}>
 			<Flexbox gap="2" align="center" class="pl-1">
-				{@render buttonContent?.()}
+				<Funnel size="1rem" weight={value?.length ? 'fill' : 'regular'} />
+
+				{name}
+
 				{#if valueCount > 0}
 					<Badge size="1" variant="outline">{valueCount}</Badge>
 				{/if}
 
-				<CaretDown />
+				<CaretDown size="1.2rem" />
 			</Flexbox>
 		</Button>
 	{/snippet}
@@ -72,7 +75,7 @@
 		<Flexbox direction="column" align="center">
 			{#each options as opt}
 				<Button
-					size="3"
+					size="2"
 					variant="clear"
 					align="start"
 					fullWidth
@@ -89,7 +92,7 @@
 
 			{#if valueCount > 0}
 				<Separator size="4" class="my-1" />
-				<Button size="3" variant="clear" fullWidth onclick={() => (value = [])}>
+				<Button size="2" variant="clear" fullWidth onclick={() => (value = [])}>
 					Reset filter
 				</Button>
 			{/if}

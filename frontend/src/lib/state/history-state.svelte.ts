@@ -33,7 +33,7 @@ export const createHistoryState = () => {
 		},
 		set status(value) {
 			status = value;
-			page = 0;
+			page = 1;
 			get();
 		},
 		// Type
@@ -42,7 +42,7 @@ export const createHistoryState = () => {
 		},
 		set type(value) {
 			type = value;
-			page = 0;
+			page = 1;
 			get();
 		},
 
@@ -80,8 +80,8 @@ export const createHistoryState = () => {
 		resetFilters() {
 			status = [];
 			type = [];
-			page = 0
-			get()
+			page = 1;
+			get();
 		}
 	};
 };

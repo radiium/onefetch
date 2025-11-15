@@ -63,6 +63,7 @@
 						</Flexbox>
 					</Panel>
 				</Flexbox>
+
 				<Separator size="4" />
 
 				<Flexbox direction="column" gap="4" as="form" class="p-5">
@@ -79,21 +80,6 @@
 							options={Object.values(DownloadType)}
 							bind:value={newState.type}
 						/>
-						<!-- <Flexbox gap="4" align="center">
-							{#each Object.values(DownloadType) as type (type)}
-								<Button
-									size="3"
-									variant={newState.type === type ? 'solid' : 'soft'}
-									onclick={() => {
-										newState.type = type;
-									}}
-								>
-									{@const Icon = typeIcons[type]}
-									<Icon  />
-									{type}
-								</Button>
-							{/each}
-						</Flexbox> -->
 					</Flexbox>
 
 					<!-- File dir -->

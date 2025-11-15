@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import DownloadPagination from '$lib/components/DownloadPagination.svelte';
 	import DownloadStatusBadge from '$lib/components/DownloadStatusBadge.svelte';
-	import Dropdown from '$lib/components/Dropdown.svelte';
+	import DropdownFilter from '$lib/components/DropdownFilter.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import PageLayout from '$lib/components/PageLayout.svelte';
 	import { createHistoryState } from '$lib/state/history-state.svelte';
@@ -43,22 +44,19 @@
 <PageLayout title="History" error={historyState.error}>
 	<Flexbox direction="column" gap="5">
 		<Flexbox gap="3">
-			<Dropdown bind:value={historyState.status} options={Object.values(DownloadStatus)}>
-				{#snippet buttonContent()}
-					STATUS
-				{/snippet}
-			</Dropdown>
+			<DropdownFilter
+				name="Status"
+				options={Object.values(DownloadStatus)}
+				bind:value={historyState.status}
+			/>
 
-			<Dropdown bind:value={historyState.type} options={Object.values(DownloadType)}>
-				{#snippet buttonContent()}
-					TYPE
-				{/snippet}
-			</Dropdown>
-
-			<div class="flex-auto"></div>
+			<DropdownFilter
+				name="Type"
+				options={Object.values(DownloadType)}
+				bind:value={historyState.type}
+			/>
 
 			<Button
-				size="3"
 				variant="outline"
 				onclick={historyState.resetFilters}
 				disabled={!historyState.hasFilters}
@@ -66,7 +64,9 @@
 				Reset filters
 			</Button>
 
-			<Button size="3" disabled={historyState.loading} onclick={historyState.get}>
+			<div class="flex-auto"></div>
+
+			<Button disabled={historyState.loading} onclick={historyState.get}>
 				<ArrowsClockwise weight="bold" />
 				Refresh
 			</Button>
@@ -101,22 +101,10 @@
 			</Flexbox>
 
 			{#if historyState.current.pagination.totalPages > 1}
-				<Flexbox gap="3">
-					{#each { length: historyState.current.pagination.totalPages } as _, i}
-						{@const page = i + 1}
-						<Button
-							size="2"
-							iconOnly
-							variant={historyState.page === page ? 'solid' : 'outline'}
-							onclick={() => {
-								console.log('page', page);
-								historyState.page = page as number;
-							}}
-						>
-							{page}
-						</Button>
-					{/each}
-				</Flexbox>
+				<DownloadPagination
+					bind:currentPage={historyState.page}
+					pagination={historyState.current.pagination}
+				/>
 			{/if}
 		{:else}
 			<EmptyState text="No downloads..." />

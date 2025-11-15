@@ -3,16 +3,11 @@
 	import { asset } from '$app/paths';
 	import NavButton from '$lib/components/NavButton.svelte';
 	import Archive from 'phosphor-svelte/lib/Archive';
-	import BoxArrowDown from 'phosphor-svelte/lib/BoxArrowDown';
-	import CheckCircle from 'phosphor-svelte/lib/CheckCircle';
 	import Folders from 'phosphor-svelte/lib/Folders';
 	import Gear from 'phosphor-svelte/lib/Gear';
 	import IconContext from 'phosphor-svelte/lib/IconContext';
-	import Pause from 'phosphor-svelte/lib/Pause';
-	import Play from 'phosphor-svelte/lib/Play';
 	import Plus from 'phosphor-svelte/lib/Plus';
-	import Stop from 'phosphor-svelte/lib/Stop';
-	import WarningCircle from 'phosphor-svelte/lib/WarningCircle';
+	import Queue from 'phosphor-svelte/lib/Queue';
 	import { Button, Flexbox, Separator, Text, ThemeRootProvider } from 'svxui';
 	import 'svxui/normalize.css';
 	import 'svxui/tokens.css';
@@ -22,7 +17,7 @@
 </script>
 
 <IconContext values={{ size: '1.4rem' }}>
-	<ThemeRootProvider>
+	<ThemeRootProvider defaultRadius="large">
 		<div class="container">
 			<aside>
 				<Flexbox as="header" gap="1" align="center" justify="start" class="mb-5">
@@ -49,48 +44,23 @@
 
 				<Separator size="4" class="my-4" />
 
-				<NavButton route="/dl/all" title="All">
-					<BoxArrowDown size="1.2rem" />
-					<span>All</span>
-				</NavButton>
-				<NavButton route="/dl/downloading" title="Downloading">
-					<Play size="1.2rem" />
-					<span>Downloading</span>
-				</NavButton>
-				<NavButton route="/dl/paused" title="Paused">
-					<Pause size="1.2rem" />
-					<span>Paused</span>
-				</NavButton>
-				<NavButton route="/dl/cancelled" title="Cancelled">
-					<Stop size="1.2rem" />
-					<span>Cancelled</span>
-				</NavButton>
-				<NavButton route="/dl/failed" title="Failed">
-					<WarningCircle size="1.2rem" />
-					<span>Failed</span>
-				</NavButton>
-				<NavButton route="/dl/completed" title="Completed">
-					<CheckCircle size="1.2rem" />
-					<span>Completed</span>
+				<NavButton route="/active" title="Active downloads">
+					<Queue size="1.2rem" />
+					<span>Active</span>
 				</NavButton>
 
-				<Separator size="4" class="my-4" />
-				<NavButton route="/files" title="Files">
+				<NavButton route="/history" title="Downloads history">
+					<Archive size="1.2rem" />
+					<span>history</span>
+				</NavButton>
+
+				<NavButton route="/files" title="Downloaded files">
 					<Folders size="1.2rem" />
 					<span>Files</span>
 				</NavButton>
 
+				<div class="flex-auto"></div>
 				<Separator size="4" class="my-4" />
-
-				<NavButton route="/download" title="Download">
-					<BoxArrowDown size="1.2rem" />
-					<span>Download</span>
-				</NavButton>
-
-				<NavButton route="/history" title="History">
-					<Archive size="1.2rem" />
-					<span>History</span>
-				</NavButton>
 
 				<NavButton route="/settings" title="Settings">
 					<Gear size="1.2rem" />
@@ -106,6 +76,8 @@
 
 <style>
 	.container {
+		--aside-width: 260px;
+
 		width: 100vw;
 		min-height: 100vh;
 		display: flex;
@@ -113,7 +85,7 @@
 		aside {
 			display: flex;
 			flex-direction: column;
-			width: 180px;
+			width: var(--aside-width);
 			height: 100vh;
 			gap: var(--space-1);
 			padding: var(--space-3);
@@ -129,7 +101,7 @@
 
 		main {
 			flex: 1 1 auto;
-			width: calc(100vw - 180px);
+			width: calc(100vw - var(--aside-width));
 			min-height: 100vh;
 			padding: var(--space-5);
 			background-color: var(--color-background-1);

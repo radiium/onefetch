@@ -8,8 +8,12 @@ import {
 	type DownloadProgressEvent
 } from '$lib/types/types';
 
-export const createDownloadState = () => {
+export const createActiveState = () => {
 	let downloads = $state<Download[]>([]);
+
+	const getAllState = useAsyncState<DownloadPage, DownloadFilters>(api.download.getAll, {
+		immediate: false
+	});
 
 	const actionOptions: AsyncStateOptions<Download> = {
 		immediate: false,
@@ -25,12 +29,8 @@ export const createDownloadState = () => {
 	const cancelState = useAsyncState<Download, string>(api.download.cancel, actionOptions);
 	const archiveState = useAsyncState<Download, string>(api.download.archive, actionOptions);
 
-	const historyState = useAsyncState<DownloadPage, DownloadFilters>(api.download.getAll, {
-		immediate: false
-	});
-
 	async function getActiveDownloads() {
-		await historyState.execute({
+		await getAllState.execute({
 			status: [
 				DownloadStatus.PENDING, //
 				DownloadStatus.REQUESTING,
@@ -40,8 +40,8 @@ export const createDownloadState = () => {
 			page: 0,
 			limit: 1000
 		});
-		if (historyState.current) {
-			downloads = historyState.current.data;
+		if (getAllState.current) {
+			downloads = getAllState.current.data;
 		}
 	}
 
