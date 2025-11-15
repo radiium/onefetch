@@ -9,7 +9,8 @@ export function useClipboard() {
 
 	async function copy(value: string): Promise<boolean> {
 		if (!isSupported) {
-			error = new Error('Clipboard API non supportée');
+			error = new Error('Clipboard API not supported');
+			console.warn(error);
 			return false;
 		}
 
@@ -19,14 +20,16 @@ export function useClipboard() {
 			error = null;
 			return true;
 		} catch (e) {
-			error = e instanceof Error ? e : new Error('Erreur lors de la copie');
+			console.error(e);
+			error = e instanceof Error ? e : new Error('Error during copying');
 			return false;
 		}
 	}
 
 	async function read(): Promise<string | undefined> {
 		if (!isSupported) {
-			error = new Error('Clipboard API non supportée');
+			error = new Error('Clipboard API not supported');
+			console.warn(error);
 			return;
 		}
 
@@ -36,7 +39,8 @@ export function useClipboard() {
 			error = null;
 			return clipboardText;
 		} catch (e) {
-			error = e instanceof Error ? e : new Error('Erreur lors de la lecture');
+			console.error(e);
+			error = e instanceof Error ? e : new Error('Error during reading');
 			return;
 		}
 	}
