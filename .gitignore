@@ -2,3 +2,4 @@
 /data
 /downloads
 .DS_Store
+**/*.db
