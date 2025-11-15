@@ -1,11 +1,11 @@
 import { browser } from '$app/environment';
-import type { FSNode } from '$lib/state/files-state.svelte';
 import type {
 	CreateDownloadInput,
 	Download,
 	DownloadFilters,
-	DownloadPage,
 	DownloadInfoResponse,
+	DownloadPage,
+	FSNode,
 	Settings
 } from '../types/types';
 import { HttpClient } from './http-client';
