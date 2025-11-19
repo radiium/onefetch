@@ -11,7 +11,7 @@ type DownloadRepository interface {
 	GetByID(id string) (*model.Download, error)
 	Update(download *model.Download) error
 	UpdateStatus(id string, status model.DownloadStatus) error
-	UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64, status model.DownloadStatus) error
+	UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64) error
 	GetActive() ([]model.Download, error)
 	Delete(id string) error
 }
@@ -52,7 +52,8 @@ func (r *downloadRepository) GetActive() ([]model.Download, error) {
 	var downloads []model.Download
 	err := r.db.Where("status IN ?", []model.DownloadStatus{
 		model.StatusPending,
-		model.StatusRequesting,
+		model.StatusRequestingInfos,
+		model.StatusRequestingToken,
 		model.StatusDownloading,
 	}).Find(&downloads).Error
 	return downloads, err
@@ -76,12 +77,11 @@ func (r *downloadRepository) UpdateStatus(id string, status model.DownloadStatus
 	return r.db.Model(&model.Download{}).Where("id = ?", id).Update("status", status).Error
 }
 
-func (r *downloadRepository) UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64, status model.DownloadStatus) error {
+func (r *downloadRepository) UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64) error {
 	return r.db.Model(&model.Download{}).Where("id = ?", id).Updates(map[string]any{
 		"progress":         progress,
 		"downloaded_bytes": downloadedBytes,
 		"speed":            speed,
-		"status":           status,
 	}).Error
 }
 

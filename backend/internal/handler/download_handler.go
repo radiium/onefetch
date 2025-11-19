@@ -136,7 +136,7 @@ func (h *downloadHandler) CreateDownload(c *fiber.Ctx) error {
 		return errors.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(download)
+	return c.Status(fiber.StatusCreated).JSON(download.Clone())
 }
 
 // PauseDownload pause a download
