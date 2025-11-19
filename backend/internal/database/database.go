@@ -18,7 +18,7 @@ type Database struct {
 func New() (*Database, error) {
 	var err error
 
-	dbPath := filepath.Join(config.Cfg.DataPath, "onefetch.db")
+	dbPath := filepath.Join(config.Cfg.DataPath, "data.db")
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		// Logger: logger.Default.LogMode(logger.Info),
 	})
