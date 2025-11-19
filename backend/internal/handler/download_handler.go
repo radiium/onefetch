@@ -147,12 +147,11 @@ func (h *downloadHandler) PauseDownload(c *fiber.Ctx) error {
 		return errors.HandleError(c, err)
 	}
 
-	download, err := h.service.PauseDownload(id)
-	if err != nil {
+	if err := h.service.PauseDownload(id); err != nil {
 		return errors.HandleError(c, fmt.Errorf("failed to pause download: %s %s", id, err.Error()))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(download)
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // ResumeDownload resume a download
@@ -163,12 +162,11 @@ func (h *downloadHandler) ResumeDownload(c *fiber.Ctx) error {
 		return errors.HandleError(c, err)
 	}
 
-	download, err := h.service.ResumeDownload(id)
-	if err != nil {
+	if err := h.service.ResumeDownload(id); err != nil {
 		return errors.HandleError(c, fmt.Errorf("failed to resume download: %s %s", id, err.Error()))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(download)
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // CancelDownload cancel a download
@@ -179,12 +177,11 @@ func (h *downloadHandler) CancelDownload(c *fiber.Ctx) error {
 		return errors.HandleError(c, err)
 	}
 
-	download, err := h.service.CancelDownload(id)
-	if err != nil {
+	if err := h.service.CancelDownload(id); err != nil {
 		return errors.HandleError(c, fmt.Errorf("failed to cancel download: %s %s", id, err.Error()))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(download)
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // ArchiveDownload archive a download

@@ -23,9 +23,9 @@ type DownloadService interface {
 	GetFileinfo(fileURL string) (*model.DownloadInfoResponse, error)
 	ListDownloads(status []model.DownloadStatus, downloadType []model.DownloadType, page, limit int) ([]model.Download, int64, error)
 	CreateDownload(fileURL string, downloadType model.DownloadType, dirName string, fileName string) (*model.Download, error)
-	PauseDownload(id string) (*model.Download, error)
-	ResumeDownload(id string) (*model.Download, error)
-	CancelDownload(id string) (*model.Download, error)
+	PauseDownload(id string) error
+	ResumeDownload(id string) error
+	CancelDownload(id string) error
 	ArchiveDownload(id string) error
 	DeleteDownload(id string) error
 }
@@ -131,25 +131,25 @@ func (ds *downloadService) CreateDownload(fileURL string, downloadType model.Dow
 	return download, nil
 }
 
-func (ds *downloadService) PauseDownload(id string) (*model.Download, error) {
+func (ds *downloadService) PauseDownload(id string) error {
 	if err := ds.dlManager.Pause(id); err != nil {
-		return nil, errors.Internal(fmt.Sprintf("failed to pause download: %v", err))
+		return errors.Internal(fmt.Sprintf("failed to pause download: %v", err))
 	}
-	return ds.downloadRepo.GetByID(id)
+	return nil
 }
 
-func (ds *downloadService) ResumeDownload(id string) (*model.Download, error) {
+func (ds *downloadService) ResumeDownload(id string) error {
 	if err := ds.dlManager.Resume(id); err != nil {
-		return nil, errors.Internal(fmt.Sprintf("failed to resume download: %v", err))
+		return errors.Internal(fmt.Sprintf("failed to resume download: %v", err))
 	}
-	return ds.downloadRepo.GetByID(id)
+	return nil
 }
 
-func (ds *downloadService) CancelDownload(id string) (*model.Download, error) {
+func (ds *downloadService) CancelDownload(id string) error {
 	if err := ds.dlManager.Cancel(id); err != nil {
-		return nil, errors.Internal(fmt.Sprintf("failed to cancel download: %v", err))
+		return errors.Internal(fmt.Sprintf("failed to cancel download: %v", err))
 	}
-	return ds.downloadRepo.GetByID(id)
+	return nil
 }
 
 func (ds *downloadService) ArchiveDownload(id string) error {
