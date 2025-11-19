@@ -38,8 +38,11 @@ func SetupRoutes(app *fiber.App, container *container.Container) {
 	// Static webapp
 	if config.Cfg.IsProd() {
 		app.Static("/", "./web")
-		app.Get("/new", func(c *fiber.Ctx) error {
-			return c.SendFile("./web/new.html")
+		app.Get("/active", func(c *fiber.Ctx) error {
+			return c.SendFile("./web/active.html")
+		})
+		app.Get("/files", func(c *fiber.Ctx) error {
+			return c.SendFile("./web/files.html")
 		})
 		app.Get("/settings", func(c *fiber.Ctx) error {
 			return c.SendFile("./web/settings.html")
