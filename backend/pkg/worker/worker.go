@@ -51,7 +51,7 @@ func (m *DownloadManager) Start(download *model.Download) error {
 		return fmt.Errorf("failed to get settings: %w", err)
 	}
 	if settings.APIKey1fichier == "" {
-		return errors.New("API key not configured")
+		return fmt.Errorf("API key not configured")
 	}
 
 	client := client.NewOneFichierClient(settings.APIKey1fichier)

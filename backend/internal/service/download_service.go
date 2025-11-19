@@ -125,7 +125,7 @@ func (ds *downloadService) CreateDownload(fileURL string, downloadType model.Dow
 
 	// Start download
 	if err := ds.dlManager.Start(download.Clone()); err != nil {
-		return nil, err
+		return nil, errors.Internal(fmt.Sprintf("failed to Start download: %v", err))
 	}
 
 	return download, nil
@@ -133,21 +133,21 @@ func (ds *downloadService) CreateDownload(fileURL string, downloadType model.Dow
 
 func (ds *downloadService) PauseDownload(id string) (*model.Download, error) {
 	if err := ds.dlManager.Pause(id); err != nil {
-		return nil, err
+		return nil, errors.Internal(fmt.Sprintf("failed to pause download: %v", err))
 	}
 	return ds.downloadRepo.GetByID(id)
 }
 
 func (ds *downloadService) ResumeDownload(id string) (*model.Download, error) {
 	if err := ds.dlManager.Resume(id); err != nil {
-		return nil, err
+		return nil, errors.Internal(fmt.Sprintf("failed to resume download: %v", err))
 	}
 	return ds.downloadRepo.GetByID(id)
 }
 
 func (ds *downloadService) CancelDownload(id string) (*model.Download, error) {
 	if err := ds.dlManager.Cancel(id); err != nil {
-		return nil, err
+		return nil, errors.Internal(fmt.Sprintf("failed to cancel download: %v", err))
 	}
 	return ds.downloadRepo.GetByID(id)
 }
