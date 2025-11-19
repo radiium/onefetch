@@ -11,23 +11,26 @@ import {
 export const createActiveState = () => {
 	let downloads = $state<Download[]>([]);
 
-	const getAllState = useAsyncState<DownloadPage, DownloadFilters>(api.download.getAll, {
-		immediate: false
-	});
-
-	const actionOptions: AsyncStateOptions<Download> = {
-		immediate: false,
-		onSuccess(data) {
-			const index = downloads?.findIndex((dl) => dl.id === data.id);
-			if (index !== -1) {
-				downloads[index] = data;
-			}
-		}
-	};
-	const pauseState = useAsyncState<Download, string>(api.download.pause, actionOptions);
-	const resumeState = useAsyncState<Download, string>(api.download.resume, actionOptions);
-	const cancelState = useAsyncState<Download, string>(api.download.cancel, actionOptions);
-	const archiveState = useAsyncState<Download, string>(api.download.archive, actionOptions);
+	const getAllState = useAsyncState<DownloadPage, DownloadFilters>(
+		api.download.getAll, //
+		{ immediate: false }
+	);
+	const pauseState = useAsyncState<Download, string>(
+		api.download.pause, //
+		{ immediate: false }
+	);
+	const resumeState = useAsyncState<Download, string>(
+		api.download.resume, //
+		{ immediate: false }
+	);
+	const cancelState = useAsyncState<Download, string>(
+		api.download.cancel, //
+		{ immediate: false }
+	);
+	const archiveState = useAsyncState<Download, string>(
+		api.download.archive, //
+		{ immediate: false }
+	);
 
 	async function getActiveDownloads() {
 		await getAllState.execute({
@@ -87,14 +90,18 @@ export const createActiveState = () => {
 					const progress = JSON.parse(event.data) as DownloadProgressEvent;
 					if (downloads) {
 						const index = downloads?.findIndex((dl) => dl.id === progress.downloadId);
+
 						if (index !== -1) {
-							downloads[index].status = progress.status;
-							downloads[index].fileName = progress.fileName;
-							downloads[index].customFileName = progress.customFileName;
-							downloads[index].progress = progress.progress;
-							downloads[index].speed = progress.speed;
-							downloads[index].fileSize = progress.fileSize;
-							downloads[index].downloadedBytes = progress.downloadedBytes;
+							downloads[index] = {
+								...downloads[index],
+								status: progress.status,
+								fileName: progress.fileName,
+								customFileName: progress.customFileName,
+								progress: progress.progress,
+								speed: progress.speed,
+								fileSize: progress.fileSize,
+								downloadedBytes: progress.downloadedBytes
+							};
 						}
 					}
 				}
