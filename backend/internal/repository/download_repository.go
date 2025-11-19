@@ -10,8 +10,6 @@ type DownloadRepository interface {
 	Create(download *model.Download) error
 	GetByID(id string) (*model.Download, error)
 	Update(download *model.Download) error
-	UpdateStatus(id string, status model.DownloadStatus) error
-	UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64) error
 	GetActive() ([]model.Download, error)
 	Delete(id string) error
 }
@@ -71,18 +69,6 @@ func (r *downloadRepository) GetByID(id string) (*model.Download, error) {
 
 func (r *downloadRepository) Update(download *model.Download) error {
 	return r.db.Save(download).Error
-}
-
-func (r *downloadRepository) UpdateStatus(id string, status model.DownloadStatus) error {
-	return r.db.Model(&model.Download{}).Where("id = ?", id).Update("status", status).Error
-}
-
-func (r *downloadRepository) UpdateProgress(id string, progress float64, downloadedBytes int64, speed *float64) error {
-	return r.db.Model(&model.Download{}).Where("id = ?", id).Updates(map[string]any{
-		"progress":         progress,
-		"downloaded_bytes": downloadedBytes,
-		"speed":            speed,
-	}).Error
 }
 
 func (r *downloadRepository) Delete(id string) error {

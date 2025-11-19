@@ -11,8 +11,7 @@ import (
 type OneFichierClient interface {
 	GetFileInfo(fileURL string) (*OneFichierInfoResponse, error)
 	GetDownloadToken(fileURL string) (*OneFichierTokenResponse, error)
-	DownloadFile(downloadURL string) (io.ReadCloser, int64, error)
-	setHeaders(req *http.Request)
+	DownloadFile(downloadURL string, offset int64) (io.ReadCloser, int64, int, error)
 }
 
 type oneFichierClient struct {
@@ -92,18 +91,50 @@ func (c *oneFichierClient) GetDownloadToken(fileURL string) (*OneFichierTokenRes
 	return &result, nil
 }
 
-func (c *oneFichierClient) DownloadFile(downloadURL string) (io.ReadCloser, int64, error) {
-	resp, err := c.client.Get(downloadURL)
+// func (c *oneFichierClient) DownloadFile(downloadURL string, offset int64) (io.ReadCloser, int64, int, error) {
+// 	req, err := http.NewRequest("GET", downloadURL, nil)
+// 	if err != nil {
+// 		return nil, 0, 0, err
+// 	}
+
+// 	if offset > 0 {
+// 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+// 	}
+
+// 	resp, err := c.client.Do(req)
+// 	if err != nil {
+// 		return nil, 0, 0, err
+// 	}
+
+// 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+// 		resp.Body.Close()
+// 		return nil, 0, 0, fmt.Errorf("download failed with status %d", resp.StatusCode)
+// 	}
+
+// 	return resp.Body, resp.ContentLength, resp.StatusCode, nil
+// }
+
+func (c *oneFichierClient) DownloadFile(downloadURL string, offset int64) (io.ReadCloser, int64, int, error) {
+	req, err := http.NewRequest("GET", downloadURL, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if offset > 0 {
+		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 		resp.Body.Close()
-		return nil, 0, fmt.Errorf("download failed with status %d", resp.StatusCode)
+		return nil, 0, 0, fmt.Errorf("download failed with status %d", resp.StatusCode)
 	}
 
-	return resp.Body, resp.ContentLength, nil
+	return resp.Body, resp.ContentLength, resp.StatusCode, nil
 }
 
 func (c *oneFichierClient) setHeaders(req *http.Request) {
