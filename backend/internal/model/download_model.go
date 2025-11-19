@@ -43,37 +43,37 @@ func (s DownloadType) Dir() string {
 type Download struct {
 	ID string `gorm:"primaryKey" json:"id"`
 
-	// Entrées utilisateur
+	// User input
 	FileURL        string       `json:"fileUrl"`
 	CustomFileDir  *string      `json:"customFileDir"`
 	CustomFileName *string      `json:"customFileName"`
 	Type           DownloadType `json:"type"`
 
-	// Download infos (depuis api 1fichier.com)
+	// Download infos (from 1fichier.com API)
 	FileName string  `json:"fileName"`
 	FileSize *int64  `json:"fileSize"`
 	MimeType *string `json:"mimeType"`
 	Checksum *string `json:"checksum"`
 
-	// Download token (depuis api 1fichier.com)
+	// Download token (from 1fichier.com API)
 	DownloadURL          *string    `json:"DownloadURL"`
-	DownloadURLExpiresAt *time.Time `json:"downloadURLExpiresAt"` // le DirectDownloadURL est valable 5 minutes
+	DownloadURLExpiresAt *time.Time `json:"downloadURLExpiresAt"` // Valid for 5 minutes only
 
-	// Gestion status
+	// Status Management
 	Status       DownloadStatus `json:"status"`
 	ErrorMessage *string        `json:"errorMessage"`
-	StartedAt    *time.Time     `json:"startedAt"`   // Date de démarrage (StatusDownloading)
-	CompletedAt  *time.Time     `json:"completedAt"` // Date de fin (StatusCompleted ou StatusFail ou Status)
+	StartedAt    *time.Time     `json:"startedAt"`   // Init only on first StatusDownloading
+	CompletedAt  *time.Time     `json:"completedAt"` // Init status StatusCompleted or StatusFail or Status
 
-	// Gestion progression
+	// Progress Management
 	Progress        float64  `json:"progress"`
 	DownloadedBytes int64    `json:"downloadedBytes"`
 	Speed           *float64 `json:"speed"`
 	RetryCount      int      `json:"retryCount"`
 
-	// Autres
-	CreatedAt  time.Time `json:"createdAt"` // Date de création
-	UpdatedAt  time.Time `json:"updatedAt"` // Date de mise à jour
+	// Others
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 	IsArchived bool      `gorm:"default:false" json:"isArchived"`
 }
 
@@ -93,6 +93,7 @@ func (d *Download) resolveFileDir() (string, error) {
 	return filepath.Abs(fileDir)
 }
 
+// TempFilePath resolve the full temporary file path
 func (d *Download) TempFilePath() (string, error) {
 	fileName := "." + d.resolveFileName() + ".tmp"
 	fileDir, err := d.resolveFileDir()
@@ -103,6 +104,7 @@ func (d *Download) TempFilePath() (string, error) {
 	return filepath.Join(fileDir, fileName), nil
 }
 
+// FinalFilePath resolve the full final file path
 func (d *Download) FinalFilePath() (string, error) {
 	fileName := d.resolveFileName()
 	fileDir, err := d.resolveFileDir()
