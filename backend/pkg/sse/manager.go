@@ -74,7 +74,7 @@ func New(config ...ManagerConfig) Manager {
 		if userCfg.SendTimeout > 0 {
 			cfg.SendTimeout = userCfg.SendTimeout
 		}
-		if userCfg.Debug == true {
+		if userCfg.Debug {
 			cfg.Debug = userCfg.Debug
 		}
 	}

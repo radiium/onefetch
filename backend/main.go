@@ -33,8 +33,14 @@ func main() {
 	})
 	app.Use(logger.New())
 	app.Use(recover.New())
-	app.Use(helmet.New())
 	app.Use(cors.New())
+	app.Use(helmet.New())
+
+	// Initialize Filesystem
+	utils.EnsureDir(config.Cfg.DataPath)
+	utils.EnsureDir(config.Cfg.DLPath)
+	utils.EnsureDir(filepath.Join(config.Cfg.DLPath, model.TypeMovie.Dir()))
+	utils.EnsureDir(filepath.Join(config.Cfg.DLPath, model.TypeSerie.Dir()))
 
 	// Initialize database
 	db, err := database.New()
@@ -56,12 +62,6 @@ func main() {
 			log.Fatalf("Failed to close sse: %v", err)
 		}
 	}()
-
-	// Initialize Filesystem
-	utils.EnsureDir(config.Cfg.DataPath)
-	utils.EnsureDir(config.Cfg.DLPath)
-	utils.EnsureDir(filepath.Join(config.Cfg.DLPath, model.TypeMovie.Dir()))
-	utils.EnsureDir(filepath.Join(config.Cfg.DLPath, model.TypeSerie.Dir()))
 
 	// Initialize service container
 	container := container.New(db, sseManager)

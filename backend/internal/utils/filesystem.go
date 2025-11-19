@@ -6,6 +6,10 @@ import (
 	"path/filepath"
 )
 
+// ============================================================================
+// FILESYSTEM UTILS
+// ============================================================================
+
 // EnsureDir create a directory at the specified location if it does not exist.
 func EnsureDir(path string) error {
 	if err := os.MkdirAll(path, 0755); err != nil {
@@ -17,7 +21,6 @@ func EnsureDir(path string) error {
 // MoveFile move and ensure destination directory exists
 func MoveFile(src, dst string) error {
 	if _, err := os.Stat(src); os.IsNotExist(err) {
-		fmt.Println("Le fichier n'existe pas")
 		return fmt.Errorf("file %s does not exist", src)
 	}
 	if err := EnsureDir(filepath.Dir(dst)); err != nil {
@@ -25,7 +28,7 @@ func MoveFile(src, dst string) error {
 	}
 
 	if err := os.Rename(src, dst); err != nil {
-		return fmt.Errorf("failed to rename file %s to %s: %w:", src, dst, err)
+		return fmt.Errorf("failed to rename file %s to %s: %w", src, dst, err)
 	}
 
 	return nil

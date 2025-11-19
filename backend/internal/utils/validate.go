@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+// ============================================================================
+// VALIDATION UTILS
+// ============================================================================
+
 // Validate1FichierURL trim and validate 1fichier.com URL
 //   - cannot be empty
 //   - must be a valid URL

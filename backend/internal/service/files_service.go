@@ -85,6 +85,27 @@ func (fs *filesService) DeleteDir(path string) (*model.FSNode, error) {
 	return fs.getDirTree()
 }
 
+// DownloadFileInline télécharge le fichier en mode inline (ouverture dans le navigateur si possible)
+// func DownloadFileInline(c *fiber.Ctx, filePath string) error {
+// 	// Vérifier si le fichier existe
+// 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+// 					return nil, errors.NotFound(fmt.Sprintf("directory not found: %s", path))
+
+// 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+// 			"error": "Fichier non trouvé",
+// 		})
+// 	}
+
+// 	// Obtenir le nom du fichier
+// 	fileName := filepath.Base(filePath)
+
+// 	// Définir les en-têtes pour affichage inline
+// 	c.Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", fileName))
+
+// 	// Envoyer le fichier (Fiber détectera automatiquement le Content-Type)
+// 	return c.SendFile(filePath)
+// }
+
 // Helpers
 
 // getDirTree retrieves the complete directory tree and handles errors
@@ -157,43 +178,3 @@ func (fs *filesService) buildAbsPathForDelete(path string) (string, error) {
 
 	return "", fmt.Errorf("path outside allowed directories")
 }
-
-// buildAbsPath generate the absolute path
-// and verify that it is contained within one of the authorized folders.
-// func (fs *filesService) buildAbsPath(path string) (string, error) {
-// 	// Authorized directories
-// 	allowedDirs := []string{
-// 		filepath.Join(config.Cfg.DLPath, model.TypeMovie.Dir()),
-// 		filepath.Join(config.Cfg.DLPath, model.TypeSerie.Dir()),
-// 	}
-
-// 	// Get the absolute path and clean it
-// 	absPath, err := filepath.Abs(filepath.Clean(path))
-// 	if err != nil {
-// 		return "", fmt.Errorf("invalid path: %w", err)
-// 	}
-
-// 	// Check that it is not a symlink (if it exists)
-// 	info, err := os.Lstat(absPath)
-// 	if err == nil {
-// 		if info.Mode()&os.ModeSymlink != 0 {
-// 			return "", fmt.Errorf("symlinks are not allowed")
-// 		}
-// 	}
-
-// 	// Verify that the path is a subdirectory of an allowed directory
-// 	for _, dir := range allowedDirs {
-// 		absAllowed, err := filepath.Abs(dir)
-// 		if err != nil {
-// 			continue
-// 		}
-
-// 		// Ensure both paths end with separator for accurate prefix matching
-// 		allowedPrefix := absAllowed + string(os.PathSeparator)
-// 		if strings.HasPrefix(absPath+string(os.PathSeparator), allowedPrefix) && absPath != absAllowed {
-// 			return absPath, nil
-// 		}
-// 	}
-
-// 	return "", fmt.Errorf("path outside allowed directories")
-// }

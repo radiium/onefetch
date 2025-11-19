@@ -6,7 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+// ============================================================================
+// FILESYSTEM TREE UTILS
+// ============================================================================
 
 // buildDirTree generates a tree representation of the file system for a given path
 func BuildDirTree(root string) (model.FSNode, error) {
@@ -38,6 +43,8 @@ func BuildDirTree(root string) (model.FSNode, error) {
 		Name:       info.Name(),
 		Path:       root,
 		IsDir:      info.IsDir(),
+		IsHidden:   isHiddenFile(info.Name()),
+		IsTmp:      isTmpFile(info.Name()),
 		IsReadOnly: isRootDir || isMovieDir || isSerieDir,
 	}
 
@@ -62,6 +69,15 @@ func BuildDirTree(root string) (model.FSNode, error) {
 	}
 
 	return node, nil
+}
+
+func isHiddenFile(path string) bool {
+	name := filepath.Base(path)
+	return strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".tmp")
+}
+func isTmpFile(path string) bool {
+	name := filepath.Base(path)
+	return isHiddenFile(name) && strings.HasSuffix(name, ".tmp")
 }
 
 // BuildDirList Returns a list of all folders and subfolders
