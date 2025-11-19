@@ -1,5 +1,5 @@
 import { api } from '$lib/api/api.svelte';
-import { useAsyncState, type AsyncStateOptions } from '$lib/api/use-async-state.svelte';
+import { useAsyncState } from '$lib/api/use-async-state.svelte';
 import {
 	DownloadStatus,
 	type Download,
