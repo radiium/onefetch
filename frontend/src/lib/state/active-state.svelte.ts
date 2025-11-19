@@ -32,8 +32,10 @@ export const createActiveState = () => {
 	async function getActiveDownloads() {
 		await getAllState.execute({
 			status: [
-				DownloadStatus.PENDING, //
-				DownloadStatus.REQUESTING,
+				DownloadStatus.IDLE, //
+				DownloadStatus.PENDING,
+				DownloadStatus.REQUESTING_INFOS,
+				DownloadStatus.REQUESTING_TOKEN,
 				DownloadStatus.DOWNLOADING,
 				DownloadStatus.PAUSED
 			],
@@ -99,7 +101,7 @@ export const createActiveState = () => {
 			});
 
 			sse.connect();
-			return () => sse.disconnect();
+			return sse.disconnect;
 		}
 	};
 };

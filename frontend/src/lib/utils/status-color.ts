@@ -7,6 +7,8 @@ export const statusColor: Record<DownloadStatus, Color> = {
 	[DownloadStatus.DOWNLOADING]: 'green',
 	[DownloadStatus.COMPLETED]: 'blue',
 	[DownloadStatus.FAILED]: 'red',
-	[DownloadStatus.REQUESTING]: 'neutral',
+	[DownloadStatus.REQUESTING_INFOS]: 'neutral',
+	[DownloadStatus.REQUESTING_TOKEN]: 'neutral',
+	[DownloadStatus.IDLE]: 'neutral',
 	[DownloadStatus.PENDING]: 'neutral'
 };
