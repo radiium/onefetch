@@ -97,7 +97,11 @@ export interface DownloadInfoResponse {
 export type FSNode = {
 	name: string;
 	path: string;
+	size: number;
+	modTime: Date;
 	isDir: boolean;
+	isHidden: boolean;
+	isTmp: boolean;
 	isReadOnly: boolean;
 	children: FSNode[];
 };

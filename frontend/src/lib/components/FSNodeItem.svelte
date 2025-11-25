@@ -5,6 +5,7 @@
 	import { AccordionItem, AccordionRoot, Button, Flexbox, Text } from 'svxui';
 	import ContextMenu from './ContextMenu.svelte';
 	import FSNodeItem from './FSNodeItem.svelte';
+	import { formatBytes } from '$lib/utils/format-bytes';
 
 	type Props = {
 		level?: number;
@@ -158,7 +159,10 @@
 			onclick={() => onSelect?.(fileNode)}
 			{oncontextmenu}
 		>
-			<Text truncate class="flex-auto">{fileNode?.name}</Text>
+			<Flexbox class="w-100" justify="between" align="center">
+				<Text truncate class="flex-auto">{fileNode?.name}</Text>
+				<Text truncate muted>{formatBytes(fileNode?.size)}</Text>
+			</Flexbox>
 		</Button>
 	{/if}
 {/if}
