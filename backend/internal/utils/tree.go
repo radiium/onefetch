@@ -42,6 +42,8 @@ func BuildDirTree(root string) (model.FSNode, error) {
 	node := model.FSNode{
 		Name:       info.Name(),
 		Path:       root,
+		Size:       info.Size(),
+		ModTime:    info.ModTime(),
 		IsDir:      info.IsDir(),
 		IsHidden:   isHiddenFile(info.Name()),
 		IsTmp:      isTmpFile(info.Name()),
