@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"dlbackend/internal/config"
 	"dlbackend/internal/model"
 	"dlbackend/internal/repository"
 	"dlbackend/pkg/client"
@@ -54,7 +55,7 @@ func (m *DownloadManager) Start(download *model.Download) error {
 		return fmt.Errorf("API key not configured")
 	}
 
-	client := client.NewOneFichierClient(settings.APIKey1fichier)
+	client := client.NewOneFichierClient(config.Cfg.ApiUrl1fichier, settings.APIKey1fichier)
 	worker := NewDownloadWorker(m.ctx, download, m.repo, client, m.sseManager)
 
 	m.workers.Store(download.ID, worker)

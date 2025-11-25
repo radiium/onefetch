@@ -8,21 +8,57 @@ import (
 	"net/http"
 )
 
+// ===============================
+// Client Interface
+// ===============================
 type OneFichierClient interface {
 	GetFileInfo(fileURL string) (*OneFichierInfoResponse, error)
 	GetDownloadToken(fileURL string) (*OneFichierTokenResponse, error)
 	DownloadFile(downloadURL string, offset int64) (io.ReadCloser, int64, int, error)
 }
 
+// ===============================
+// Client Struct
+// ===============================
 type oneFichierClient struct {
-	apiKey string
-	client *http.Client
+	baseURL    string
+	apiKey     string
+	httpClient *http.Client
 }
 
-func NewOneFichierClient(apiKey string) OneFichierClient {
+// ===============================
+// Data Structures
+// ===============================
+
+// OneFichierInfoResponse response of /file/info.cgi
+type OneFichierInfoResponse struct {
+	URL      string `json:"url"`
+	Filename string `json:"filename"`
+	Size     int64  `json:"size"`
+	// Date        time.Time `json:"date"`
+	Checksum    string  `json:"checksum"`
+	ContentType string  `json:"content-type"`
+	Description *string `json:"description,omitempty"`
+	Pass        int     `json:"pass"`
+	Path        string  `json:"path"`
+	FolderID    string  `json:"folder_id"`
+}
+
+// OneFichierTokenResponse response of /download/get_token.cgi
+type OneFichierTokenResponse struct {
+	URL     string  `json:"url"`
+	Status  string  `json:"status"`
+	Message *string `json:"message,omitempty"`
+}
+
+// ===============================
+// Client Constructor
+// ===============================
+func NewOneFichierClient(baseURL string, apiKey string) OneFichierClient {
 	return &oneFichierClient{
-		apiKey: apiKey,
-		client: &http.Client{
+		baseURL: baseURL,
+		apiKey:  apiKey,
+		httpClient: &http.Client{
 			Timeout: 0, // Pas de timeout pour le body streaming
 			Transport: &http.Transport{
 				MaxIdleConns:        100,
@@ -33,6 +69,9 @@ func NewOneFichierClient(apiKey string) OneFichierClient {
 	}
 }
 
+// ===============================
+// POST /file/info.cgi
+// ===============================
 func (c *oneFichierClient) GetFileInfo(fileURL string) (*OneFichierInfoResponse, error) {
 	payload := map[string]string{"url": fileURL}
 	body, err := json.Marshal(payload)
@@ -40,13 +79,13 @@ func (c *oneFichierClient) GetFileInfo(fileURL string) (*OneFichierInfoResponse,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", "https://api.1fichier.com/v1/file/info.cgi", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", c.baseURL+"/file/info.cgi", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
 	c.setHeaders(req)
-	resp, err := c.client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +99,9 @@ func (c *oneFichierClient) GetFileInfo(fileURL string) (*OneFichierInfoResponse,
 	return &result, nil
 }
 
+// ===============================
+// POST /download/get_token.cgi
+// ===============================
 func (c *oneFichierClient) GetDownloadToken(fileURL string) (*OneFichierTokenResponse, error) {
 	payload := map[string]string{"url": fileURL}
 	body, err := json.Marshal(payload)
@@ -67,13 +109,13 @@ func (c *oneFichierClient) GetDownloadToken(fileURL string) (*OneFichierTokenRes
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", "https://api.1fichier.com/v1/download/get_token.cgi", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", c.baseURL+"/download/get_token.cgi", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
 	c.setHeaders(req)
-	resp, err := c.client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -91,29 +133,9 @@ func (c *oneFichierClient) GetDownloadToken(fileURL string) (*OneFichierTokenRes
 	return &result, nil
 }
 
-// func (c *oneFichierClient) DownloadFile(downloadURL string, offset int64) (io.ReadCloser, int64, int, error) {
-// 	req, err := http.NewRequest("GET", downloadURL, nil)
-// 	if err != nil {
-// 		return nil, 0, 0, err
-// 	}
-
-// 	if offset > 0 {
-// 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
-// 	}
-
-// 	resp, err := c.client.Do(req)
-// 	if err != nil {
-// 		return nil, 0, 0, err
-// 	}
-
-// 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-// 		resp.Body.Close()
-// 		return nil, 0, 0, fmt.Errorf("download failed with status %d", resp.StatusCode)
-// 	}
-
-// 	return resp.Body, resp.ContentLength, resp.StatusCode, nil
-// }
-
+// ===============================
+// GET download the file
+// ===============================
 func (c *oneFichierClient) DownloadFile(downloadURL string, offset int64) (io.ReadCloser, int64, int, error) {
 	req, err := http.NewRequest("GET", downloadURL, nil)
 	if err != nil {
@@ -124,7 +146,7 @@ func (c *oneFichierClient) DownloadFile(downloadURL string, offset int64) (io.Re
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
 	}
 
-	resp, err := c.client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, 0, 0, err
 	}

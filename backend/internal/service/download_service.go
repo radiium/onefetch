@@ -62,7 +62,7 @@ func (ds *downloadService) GetFileinfo(fileURL string) (*model.DownloadInfoRespo
 		return nil, errors.Internal("1fichier API key not configured")
 	}
 
-	oneFichierClient := client.NewOneFichierClient(settings.APIKey1fichier)
+	oneFichierClient := client.NewOneFichierClient(config.Cfg.ApiUrl1fichier, settings.APIKey1fichier)
 	fileinfo, err := oneFichierClient.GetFileInfo(fileURL)
 	if err != nil {
 		log.Error(err)
