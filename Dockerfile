@@ -16,7 +16,7 @@ RUN pnpm run build
 # Build backend
 #
 
-FROM golang:1.25-alpine AS backend-builder
+FROM golang:1.26-alpine AS backend-builder
 
 RUN apk add --no-cache gcc musl-dev sqlite-dev
 WORKDIR /app
