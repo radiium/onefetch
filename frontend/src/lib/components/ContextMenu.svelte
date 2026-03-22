@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { type Snippet } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { buildFloatingMiddlewares, clickOutsideAction, FloatingStateManager, Panel } from 'svxui';
+	import { clickoutside, flip, FloatingEngine, offset, Panel, shift } from 'svxui';
 
 	// Props
 	type Props = {
@@ -10,11 +10,11 @@
 	let { children }: Props = $props();
 
 	let isOpen = $state<boolean>(false);
-	const floating = new FloatingStateManager({
+	const floating = new FloatingEngine({
 		transform: true,
 		strategy: 'fixed',
 		placement: 'bottom-start',
-		middleware: buildFloatingMiddlewares({ offset: true, flip: true, shift: true })
+		middleware: [offset(), flip(), shift()]
 	});
 
 	export function open(evt: MouseEvent): void {
@@ -60,14 +60,13 @@
 	<div
 		transition:fade={{ duration: 150, delay: 0 }}
 		bind:this={floating.floating}
-		use:clickOutsideAction
-		onclickoutside={handleClickOutside}
+		{@attach clickoutside({ onClickOutside: handleClickOutside })}
 		style={floating.style}
 		class="context-menu"
 		data-state={isOpen ? 'open' : 'close'}
 		role="dialog"
 	>
-		<Panel size="2" variant="outline">
+		<Panel size="2" variant="soft" outline>
 			{@render children?.({ close })}
 		</Panel>
 	</div>

@@ -15,12 +15,13 @@
 
 <Floating
 	size="2"
-	variant="outline"
+	variant="soft"
+	outline
 	placement="bottom-end"
 	autoUpdate
 	offset={4}
 	flip
-	closeOnClickOutside
+	closeOnOutsideClick
 	closeOnScroll
 	closeOnEscape
 	closeOnResize
@@ -33,7 +34,7 @@
 	{/snippet}
 	{#snippet content()}
 		<Flexbox direction="column" gap="1" align="center" style="min-width: 250px">
-			{#each options as opt}
+			{#each options as opt, i (i)}
 				<Button
 					variant="clear"
 					align="start"

@@ -1,11 +1,15 @@
 <script lang="ts">
 	import type { FSNode } from '$lib/types/types';
-	import { CaretDown, CaretRight, Folder, Plus, Trash } from 'phosphor-svelte';
+	import { formatBytes } from '$lib/utils/format-bytes';
+	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
+	import CaretRightIcon from 'phosphor-svelte/lib/CaretRightIcon';
+	import FolderIcon from 'phosphor-svelte/lib/FolderIcon';
+	import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
+	import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
 	import { slide } from 'svelte/transition';
-	import { AccordionItem, AccordionRoot, Button, Flexbox, Text } from 'svxui';
+	import { Accordion, Button, Flexbox, Text } from 'svxui';
 	import ContextMenu from './ContextMenu.svelte';
 	import FSNodeItem from './FSNodeItem.svelte';
-	import { formatBytes } from '$lib/utils/format-bytes';
 
 	type Props = {
 		level?: number;
@@ -48,7 +52,7 @@
 					onNew?.(fileNode);
 				}}
 			>
-				<Plus />
+				<PlusIcon />
 				New folder
 			</Button>
 		{/if}
@@ -62,7 +66,7 @@
 				onDelete?.(fileNode);
 			}}
 		>
-			<Trash />
+			<TrashIcon />
 			Delete
 		</Button>
 	</Flexbox>
@@ -70,85 +74,82 @@
 
 {#if fileNode}
 	{#if fileNode.isDir}
-		<AccordionRoot orientation="vertical" bind:value>
-			{#snippet children(root)}
-				<Flexbox direction="column" class="w-100" {...root.rootAttrs}>
-					<AccordionItem value={fileNode.path}>
-						{#snippet children(item)}
-							<!-- Item -->
-							<Flexbox direction="column" class="w-100" {...item.itemAttrs}>
-								<!-- Heading -->
+		<Accordion orientation="vertical" bind:value>
+			{#snippet children(accordion)}
+				<Flexbox direction="column" class="w-100" {...accordion.rootAttrs}>
+					{@const item = accordion.getItem(fileNode.path)}
+					<!-- Item -->
+					<Flexbox direction="column" class="w-100" {...item.itemAttrs}>
+					
+						<!-- Heading -->
+						<Button
+							variant="clear"
+							align="start"
+							fullWidth
+							style={offsetStyle}
+							{active}
+							{oncontextmenu}
+						>
+							<Flexbox
+								gap="1"
+								align="center"
+								justify="start"
+								class="w-100 py-1"
+								style="cursor: pointer; "
+								{...item.headingAttrs}
+							>
+								<Flexbox align="center" {...item.triggerAttrs}>
+									{#if item.expanded}
+										<CaretDownIcon size="1.2rem" />
+									{:else}
+										<CaretRightIcon size="1.2rem" />
+									{/if}
+								</Flexbox>
 
-								<Button
-									variant="clear"
-									align="start"
-									fullWidth
-									style={offsetStyle}
-									{active}
-									{oncontextmenu}
+								<FolderIcon
+									size="1.2rem"
+									ondblclick={item.triggerAttrs?.onclick}
+									onclick={(e) => {
+										e.stopPropagation();
+										e.preventDefault();
+										onSelect?.(fileNode);
+									}}
+								/>
+								<Text
+									class="shrink-0 flex-auto"
+									truncate
+									ondblclick={item.triggerAttrs?.onclick}
+									onclick={(e: MouseEvent) => {
+										e.stopPropagation();
+										e.preventDefault();
+										onSelect?.(fileNode);
+									}}
 								>
-									<Flexbox
-										gap="1"
-										align="center"
-										justify="start"
-										class="w-100 py-1"
-										style="cursor: pointer; "
-										{...item.headingAttrs}
-									>
-										<Flexbox align="center" {...item.triggerAttrs}>
-											{#if item.expanded}
-												<CaretDown size="1.2rem" />
-											{:else}
-												<CaretRight size="1.2rem" />
-											{/if}
-										</Flexbox>
-
-										<Folder
-											size="1.2rem"
-											ondblclick={(e) => (item.triggerAttrs?.onclick as any)?.(e)}
-											onclick={(e) => {
-												e.stopPropagation();
-												e.preventDefault();
-												onSelect?.(fileNode);
-											}}
-										/>
-										<Text
-											class="shrink-0 flex-auto"
-											truncate
-											ondblclick={(e: MouseEvent) => (item.triggerAttrs?.onclick as any)?.(e)}
-											onclick={(e: MouseEvent) => {
-												e.stopPropagation();
-												e.preventDefault();
-												onSelect?.(fileNode);
-											}}
-										>
-											{fileNode?.name}
-										</Text>
-									</Flexbox>
-								</Button>
-
-								<!-- Content -->
-								{#if item.expanded}
-									<div transition:slide={{ duration: 150 }} {...item.contentAttrs}>
-										{#each fileNode.children as childFileNode}
-											<FSNodeItem
-												fileNode={childFileNode}
-												{fileNodeSelected}
-												level={level + 1}
-												{disabled}
-												{onSelect}
-												{onNew}
-												{onDelete}
-											/>
-										{/each}
-									</div>
-								{/if}
+									{fileNode?.name}
+								</Text>
 							</Flexbox>
-						{/snippet}
-					</AccordionItem>
+						</Button>
+
+						<!-- Content -->
+						{#if item.expanded}
+							<div transition:slide={{ duration: 150 }} {...item.contentAttrs}>
+								{#each fileNode.children as childFileNode, i (i)}
+									<FSNodeItem
+										fileNode={childFileNode}
+										{fileNodeSelected}
+										level={level + 1}
+										{disabled}
+										{onSelect}
+										{onNew}
+										{onDelete}
+									/>
+								{/each}
+							</div>
+						{/if}
+					</Flexbox>
 				</Flexbox>
 			{/snippet}
-		</AccordionRoot>
+		</Accordion>
 	{:else}
 		<Button
 			variant="clear"

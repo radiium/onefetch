@@ -1,22 +1,13 @@
 <script lang="ts">
-	import CaretDown from 'phosphor-svelte/lib/CaretDown';
-	import Funnel from 'phosphor-svelte/lib/Funnel';
-	import {
-		Badge,
-		Button,
-		Checkbox,
-		Flexbox,
-		Floating,
-		Separator,
-		type ButtonProps,
-		type FloatingProps
-	} from 'svxui';
+	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
+	import FunnelIcon from 'phosphor-svelte/lib/FunnelIcon';
+	import { Badge, Button, Checkbox, Flexbox, Floating, Separator, type ButtonProps, type FloatingProps } from 'svxui';
 
 	type Props = {
 		name: string;
 		value?: string[] | null;
 		options: string[];
-		floatingProps?: Partial<FloatingProps>;
+		floatingProps?: FloatingProps;
 		buttonOptionProps?: Partial<ButtonProps>;
 		buttonProps?: Partial<ButtonProps>;
 	};
@@ -26,7 +17,7 @@
 		options = [],
 		floatingProps,
 		buttonOptionProps,
-		buttonProps,
+		buttonProps
 	}: Props = $props();
 
 	let isOpen = $state(false);
@@ -47,19 +38,20 @@
 
 <Floating
 	size="1"
-	variant="outline"
+	variant="soft"
+	outline
 	placement="bottom-start"
 	offset={4}
 	autoUpdate
 	flip
-	closeOnClickOutside
+	closeOnOutsideClick
 	{...floatingProps}
 	bind:isOpen
 >
 	{#snippet trigger()}
 		<Button size="2" variant="outline" {...buttonProps} onclick={() => (isOpen = !isOpen)}>
 			<Flexbox gap="2" align="center" class="pl-1">
-				<Funnel size="1rem" weight={value?.length ? 'fill' : 'regular'} />
+				<FunnelIcon size="1rem" weight={value?.length ? 'fill' : 'regular'} />
 
 				{name}
 
@@ -67,13 +59,13 @@
 					<Badge size="1" variant="outline">{valueCount}</Badge>
 				{/if}
 
-				<CaretDown size="1.2rem" />
+				<CaretDownIcon size="1.2rem" />
 			</Flexbox>
 		</Button>
 	{/snippet}
 	{#snippet content()}
 		<Flexbox direction="column" align="center">
-			{#each options as opt}
+			{#each options as opt, i (i)}
 				<Button
 					size="2"
 					variant="clear"

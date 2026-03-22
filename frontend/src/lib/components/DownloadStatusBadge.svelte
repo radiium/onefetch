@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { DownloadStatus, type Download } from '$lib/types/types';
 	import { statusColor } from '$lib/utils/status-color';
-	import Info from 'phosphor-svelte/lib/Info';
-	import WarningCircle from 'phosphor-svelte/lib/WarningCircle';
+	import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
+	import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
 	import { Badge, Flexbox, Floating, Text } from 'svxui';
 
 	type Props = {
@@ -23,13 +23,13 @@
 				onmouseenter={() => (isOpen = true)}
 				onmouseleave={() => (isOpen = false)}
 			>
-				<Info />
+				<InfoIcon />
 				{dl.status}
 			</Badge>
 		{/snippet}
 		{#snippet content()}
 			<Flexbox gap="3" style="max-width: 500px;">
-				<WarningCircle size="24px" weight="fill" color="var(--tomato-9)" class="shrink-0" />
+				<WarningCircleIcon size="24px" weight="fill" color="var(--tomato-9)" class="shrink-0" />
 				<Text color="red">{dl.errorMessage}</Text>
 			</Flexbox>
 		{/snippet}

@@ -9,9 +9,9 @@
 	import Plus from 'phosphor-svelte/lib/Plus';
 	import Queue from 'phosphor-svelte/lib/Queue';
 	import { Button, Flexbox, Separator, Text, ThemeRootProvider } from 'svxui';
-	import 'svxui/normalize.css';
-	import 'svxui/tokens.css';
-	import 'svxui/utilities.css';
+	import 'svxui/styles/normalize.css';
+	import 'svxui/styles/tokens.css';
+	import 'svxui/styles/utilities.css';
 
 	let { children } = $props();
 </script>

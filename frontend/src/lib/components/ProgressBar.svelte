@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Color } from 'svxui';
 
-	interface Props {
+	type Props = {
 		value: number;
 		color?: Color;
-	}
+	};
 
 	let { value, color }: Props = $props();
 

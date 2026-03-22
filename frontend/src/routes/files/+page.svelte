@@ -4,7 +4,7 @@
 	import { createFilesState } from '$lib/state/files-state.svelte';
 	import type { FSNode } from '$lib/types/types';
 	import { onMount } from 'svelte';
-	import { Button, clickOutsideAction, Dialog, Flexbox, Input } from 'svxui';
+	import { Button, clickoutside, Dialog, Flexbox, Input } from 'svxui';
 
 	const fileState = createFilesState();
 	onMount(fileState.get);
@@ -47,8 +47,7 @@
 
 <PageLayout title="Files" error={fileState.error}>
 	<div
-		use:clickOutsideAction
-		onclickoutside={() => (current = undefined)}
+		{@attach clickoutside({ onClickOutside: () => (current = undefined) })}
 		style="width: auto; overflow: auto"
 	>
 		{#if fileState.data}
@@ -63,7 +62,7 @@
 	</div>
 </PageLayout>
 
-<Dialog bind:isOpen={newIsOpen} width="500px" maxWidth="90vw" closeOnBackdropClick closeOnEscape>
+<Dialog bind:isOpen={newIsOpen} style="width: 500px; max-width: 90vw;" closeOnBackdropClick closeOnEscape>
 	<Flexbox direction="column" gap="3">
 		<h2 class="my-0">Add new folder</h2>
 		<div>
@@ -76,9 +75,9 @@
 	</Flexbox>
 </Dialog>
 
-<Dialog bind:isOpen={deleteIsOpen} width="500px" maxWidth="90vw" closeOnBackdropClick closeOnEscape>
+<Dialog bind:isOpen={deleteIsOpen} style="width: 500px; max-width: 90vw;" closeOnBackdropClick closeOnEscape>
 	<Flexbox direction="column" gap="3">
-		<h2 class="my-0">Delete</h2>
+		<h2 class="my-0">Delete</h2>∏
 		<div>
 			Do you want delete {deleteCurrent?.name} item ?
 		</div>

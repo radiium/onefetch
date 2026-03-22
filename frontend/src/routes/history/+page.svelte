@@ -10,10 +10,11 @@
 	import { DownloadStatus, DownloadType } from '$lib/types/types';
 	import { formatBytes } from '$lib/utils/format-bytes';
 	import { formatDate } from '$lib/utils/format-date';
+	import { isBrowser } from '$lib/utils/is-browser';
 	import { typeIcons } from '$lib/utils/type-icons';
 	import ArrowsClockwise from 'phosphor-svelte/lib/ArrowsClockwise';
 	import { onMount } from 'svelte';
-	import { Button, Flexbox, isBrowser, Panel, Text } from 'svxui';
+	import { Button, Flexbox, Panel, Text } from 'svxui';
 
 	const historyState = createHistoryState();
 	onMount(historyState.get);
@@ -29,6 +30,7 @@
 
 	$effect(() => {
 		if (isBrowser()) {
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const searchParams = new URLSearchParams();
 			searchParams.set('status', historyState.status?.join(','));
 			searchParams.set('type', historyState.type?.join(','));
@@ -74,7 +76,7 @@
 
 		{#if Array.isArray(historyState.current?.data) && historyState.current?.data?.length}
 			<Flexbox direction="column" gap="2">
-				{#each historyState.current?.data as dl}
+				{#each historyState.current?.data as dl, i (i)}
 					<Panel variant="soft">
 						<Flexbox direction="column" gap="3">
 							<Flexbox gap="3">

@@ -14,28 +14,29 @@
 		"lint": "prettier --check . && eslint ."
 	},
 	"devDependencies": {
-		"@eslint/compat": "^2.0.0",
-		"@eslint/js": "^9.39.1",
+		"@eslint/compat": "^2.0.3",
+		"@eslint/js": "^9.39.4",
 		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.48.5",
-		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@sveltejs/kit": "^2.55.0",
+		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@types/node": "^22.19.1",
-		"eslint": "^9.39.1",
+		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.13.0",
-		"globals": "^16.5.0",
-		"prettier": "^3.6.2",
-		"prettier-plugin-svelte": "^3.4.0",
-		"svelte": "^5.43.12",
-		"svelte-check": "^4.3.4",
+		"eslint-plugin-svelte": "^3.16.0",
+		"globals": "^17.4.0",
+		"prettier": "^3.8.1",
+		"prettier-plugin-svelte": "^3.5.1",
+		"svelte": "^5.54.1",
+		"svelte-check": "^4.4.5",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.47.0",
-		"vite": "^7.2.2",
+		"typescript-eslint": "^8.57.1",
+		"vite": "^8.0.1",
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
-		"phosphor-svelte": "^3.0.1",
-		"svxui": "^0.0.13"
+		"phosphor-svelte": "^3.1.0",
+		"svelte-preprocess": "^6.0.3",
+		"svxui": "^0.0.14"
 	},
-	"packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c"
+	"packageManager": "pnpm@10.32.1"
 }

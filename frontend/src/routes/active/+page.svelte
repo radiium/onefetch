@@ -13,7 +13,7 @@
 <PageLayout title="Download" error={activeState.error}>
 	{#if activeState.downloads?.length > 0}
 		<Flexbox direction="column" gap="4">
-			{#each activeState.downloads as download}
+			{#each activeState.downloads as download, i (i)}
 				<DownloadCard
 					{download}
 					pause={activeState.pause}

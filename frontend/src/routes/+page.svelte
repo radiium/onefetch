@@ -5,12 +5,12 @@
 	import { DownloadType } from '$lib/types/types';
 	import { useClipboard } from '$lib/utils/clipboard.svelte';
 	import { formatBytes } from '$lib/utils/format-bytes';
-	import { Folder } from 'phosphor-svelte';
-	import Database from 'phosphor-svelte/lib/Database';
-	import FileArrowDown from 'phosphor-svelte/lib/FileArrowDown';
-	import Play from 'phosphor-svelte/lib/Play';
+	import DatabaseIcon from 'phosphor-svelte/lib/DatabaseIcon';
+	import FileArrowDownIcon from 'phosphor-svelte/lib/FileArrowDownIcon';
+	import FolderIcon from 'phosphor-svelte/lib/FolderIcon';
+	import PlayIcon from 'phosphor-svelte/lib/PlayIcon';
 
-	import { Button, Flexbox, Input, Panel, Select, Separator, Text } from 'svxui';
+	import { Button, Flexbox, Input, Panel, Select, SelectOption, Separator, Text } from 'svxui';
 
 	const id = $props.id();
 	const newState = createNewState();
@@ -43,7 +43,7 @@
 				<Flexbox gap="4" align="stretch" class="p-5">
 					<Panel size="2" style="width: 120px;" class="shrink-0 ">
 						<Flexbox gap="3" align="center" justify="center" class="h-100">
-							<Database class="shrink-0" />
+							<DatabaseIcon class="shrink-0" />
 							<Text muted weight="medium" wrap="nowrap" align="center" class="flex-auto">
 								{formatBytes(newState.fileinfo.size)}
 							</Text>
@@ -52,7 +52,7 @@
 
 					<Panel size="2" class="flex-auto min-w-0">
 						<Flexbox gap="3" align="center">
-							<FileArrowDown class="shrink-0" />
+							<FileArrowDownIcon class="shrink-0" />
 							<Text
 								muted
 								weight="medium"
@@ -77,9 +77,12 @@
 							size="3"
 							style="min-width: 150px;"
 							class="flex-auto"
-							options={Object.values(DownloadType)}
 							bind:value={newState.type}
-						/>
+						>
+							{#each Object.values(DownloadType) as value, i (i)}
+								<SelectOption {value}>{value}</SelectOption>
+							{/each}
+						</Select>
 					</Flexbox>
 
 					<!-- File dir -->
@@ -102,7 +105,7 @@
 									disabled={newState.directories.length === 0}
 									onSelect={(dir) => (newState.fileDir = dir)}
 								>
-									<Folder />
+									<FolderIcon />
 								</SelectDirectory>
 							{/if}
 						</Flexbox>
@@ -126,7 +129,7 @@
 			<!-- Submit -->
 			<Flexbox>
 				<Button size="3" onclick={newState.create}>
-					<Play weight="fill" />
+					<PlayIcon weight="fill" />
 					Start download
 				</Button>
 			</Flexbox>
