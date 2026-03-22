@@ -5,13 +5,13 @@ USERNAME="radiium"
 IMAGE_NAME="onefetch"
 BUMP="${1:-patch}"   # major | minor | patch
 
-# Lecture de la version courante
+# Read current version
 CURRENT=$(cat VERSION)
 MAJOR=$(echo $CURRENT | cut -d. -f1)
 MINOR=$(echo $CURRENT | cut -d. -f2)
 PATCH=$(echo $CURRENT | cut -d. -f3)
 
-# Incrément
+# Increment
 case "$BUMP" in
   major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
   minor) MINOR=$((MINOR+1)); PATCH=0 ;;
@@ -22,7 +22,7 @@ esac
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 echo "Bumping $CURRENT → $NEW_VERSION"
 
-# Mise à jour des fichiers
+# Update files
 echo "$NEW_VERSION" > VERSION
 sed -i '' "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" frontend/package.json
 

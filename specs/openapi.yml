@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: DL Manager
-  description: API de gestion de téléchargements depuis 1fichier.com
+  description: API for managing downloads from 1fichier.com
   version: "1"
-  
+
 servers:
   - url: /api
     description: API Server
@@ -12,7 +12,9 @@ tags:
   - name: Settings
     description: App settings
   - name: Downloads
-    description: Downloads made in the application
+    description: Downloads managed by the application
+  - name: Files
+    description: File system browser for the download directory
 
 paths:
   /settings:
@@ -35,7 +37,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     patch:
       tags:
         - Settings
@@ -55,6 +57,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Settings'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /downloads/infos:
+    get:
+      tags:
+        - Downloads
+      summary: Get file info from 1fichier
+      description: Fetch file metadata from 1fichier and return available download directories
+      operationId: getDownloadInfos
+      parameters:
+        - name: url
+          in: query
+          description: 1fichier file URL
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File info retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadInfoResponse'
         '400':
           description: Bad request
           content:
@@ -100,12 +136,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     get:
       tags:
         - Downloads
-      summary: List of downloads with pagination, filters and sorting
-      description: List of downloads with pagination, filters and sorting
+      summary: List downloads with pagination, filters and sorting
+      description: List downloads with pagination, filters and sorting
       operationId: listDownloads
       parameters:
         - name: status
@@ -161,8 +197,8 @@ paths:
     get:
       tags:
         - Downloads
-      summary: Server sent event of active downloads
-      description: Server sent event of active downloads
+      summary: Server-Sent Events stream of active downloads
+      description: Server-Sent Events stream of active downloads
       operationId: streamDownloads
       responses:
         '200':
@@ -246,6 +282,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /downloads/{id}/cancel:
+    post:
+      tags:
+        - Downloads
+      summary: Cancel a download
+      description: Cancel a download
+      operationId: cancelDownload
+      parameters:
+        - name: id
+          in: path
+          description: Download ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download cancelled successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Download not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /downloads/{id}/archive:
     post:
       tags:
@@ -282,27 +354,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /downloads/{id}:
+    delete:
+      tags:
+        - Downloads
+      summary: Delete a download
+      description: Delete a download record
+      operationId: deleteDownload
+      parameters:
+        - name: id
+          in: path
+          description: Download ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Download deleted successfully
+        '404':
+          description: Download not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /files:
+    get:
+      tags:
+        - Files
+      summary: Get download directory tree
+      description: Returns the file system tree of the download directory
+      operationId: getFiles
+      responses:
+        '200':
+          description: File system tree retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSNode'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Files
+      summary: Create a directory
+      description: Create a new directory inside the download directory
+      operationId: createDirectory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDirRequest'
+      responses:
+        '201':
+          description: Directory created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSNode'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Files
+      summary: Delete a file or directory
+      description: Delete a file or directory at the given path
+      operationId: deleteFile
+      parameters:
+        - name: path
+          in: query
+          description: Path of the file or directory to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File or directory deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FSNode'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     DownloadStatus:
       type: string
       enum:
+        - IDLE
         - PENDING
-        - REQUESTING
+        - REQUESTING_INFOS
+        - REQUESTING_TOKEN
         - DOWNLOADING
         - PAUSED
-        - COMPLETED
-        - FAILED
         - CANCELLED
+        - FAILED
+        - COMPLETED
       description: Download status
-    
+
     DownloadType:
       type: string
       enum:
         - MOVIE
-        - TVSHOW
+        - SERIE
       description: Type of downloaded content
-    
+
     Settings:
       type: object
       required:
@@ -315,7 +505,7 @@ components:
         downloadPath:
           type: string
           description: Local path where files will be downloaded
-    
+
     CreateDownloadRequest:
       type: object
       required:
@@ -324,10 +514,18 @@ components:
       properties:
         url:
           type: string
-          description: URL to download
+          description: 1fichier file URL
         type:
           $ref: '#/components/schemas/DownloadType'
-    
+        fileName:
+          type: string
+          nullable: true
+          description: Override the downloaded file name
+        fileDir:
+          type: string
+          nullable: true
+          description: Override the destination directory
+
     Download:
       type: object
       required:
@@ -427,7 +625,7 @@ components:
         retryCount:
           type: integer
           description: Number of retry attempts
-    
+
     DownloadProgressEvent:
       type: object
       required:
@@ -443,6 +641,14 @@ components:
         fileName:
           type: string
           description: Name of the file being downloaded
+        customFileName:
+          type: string
+          nullable: true
+          description: Custom file name override
+        customFileDir:
+          type: string
+          nullable: true
+          description: Custom destination directory override
         status:
           $ref: '#/components/schemas/DownloadStatus'
         progress:
@@ -450,18 +656,126 @@ components:
           format: double
           description: Download progress (0-100)
         downloadedBytes:
-          type: string
-          description: Number of bytes downloaded (represented as string to support large integers)
+          type: integer
+          format: int64
+          description: Number of bytes downloaded
         fileSize:
-          type: string
+          type: integer
+          format: int64
           nullable: true
-          description: Total file size in bytes (represented as string to support large integers)
+          description: Total file size in bytes
         speed:
           type: number
           format: double
           nullable: true
           description: Download speed in bytes per second
-    
+
+    FileInfo:
+      type: object
+      properties:
+        url:
+          type: string
+          description: 1fichier file URL
+        filename:
+          type: string
+          description: File name
+        size:
+          type: integer
+          format: int64
+          description: File size in bytes
+        checksum:
+          type: string
+          description: File checksum
+        content-type:
+          type: string
+          description: MIME type
+        description:
+          type: string
+          nullable: true
+          description: File description
+        pass:
+          type: integer
+          description: Password protection flag
+        path:
+          type: string
+          description: File path on 1fichier
+        folder_id:
+          type: string
+          description: Folder ID on 1fichier
+
+    DownloadInfoResponse:
+      type: object
+      required:
+        - fileinfo
+        - directories
+      properties:
+        fileinfo:
+          $ref: '#/components/schemas/FileInfo'
+        directories:
+          type: object
+          description: Available destination directories indexed by download type
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    FSNode:
+      type: object
+      required:
+        - name
+        - path
+        - size
+        - modTime
+        - isDir
+        - isReadOnly
+        - isHidden
+        - isTmp
+      properties:
+        name:
+          type: string
+          description: File or directory name
+        path:
+          type: string
+          description: Full path
+        size:
+          type: integer
+          format: int64
+          description: Size in bytes
+        modTime:
+          type: string
+          format: date-time
+          description: Last modification time
+        isDir:
+          type: boolean
+          description: Whether this node is a directory
+        isReadOnly:
+          type: boolean
+          description: Whether this node is read-only
+        isHidden:
+          type: boolean
+          description: Whether this node is hidden
+        isTmp:
+          type: boolean
+          description: Whether this is a temporary file
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FSNode'
+          description: Child nodes (directories only)
+
+    CreateDirRequest:
+      type: object
+      required:
+        - path
+        - dirname
+      properties:
+        path:
+          type: string
+          description: Parent directory path
+        dirname:
+          type: string
+          description: Name of the new directory
+
     DownloadQueryParams:
       type: object
       properties:
@@ -475,7 +789,7 @@ components:
         limit:
           type: integer
           minimum: 1
-    
+
     Pagination:
       type: object
       required:
@@ -496,7 +810,7 @@ components:
         totalPages:
           type: integer
           description: Total number of pages
-    
+
     DownloadPage:
       type: object
       required:
@@ -509,7 +823,7 @@ components:
             $ref: '#/components/schemas/Download'
         pagination:
           $ref: '#/components/schemas/Pagination'
-    
+
     Error:
       type: object
       required:

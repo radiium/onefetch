@@ -732,7 +732,7 @@ func TestDownloadWorker_PrepareFile(t *testing.T) {
 			Type:            model.TypeMovie,
 		}
 
-		// Créer un fichier existant
+		// Create existing file
 		tempPath, _ := download.TempFilePath()
 		os.MkdirAll(filepath.Dir(tempPath), 0755)
 		existingData := []byte("existing data")

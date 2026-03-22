@@ -223,7 +223,7 @@ func contains(s, substr string) bool {
 }
 
 func TestBuildDirTreeAsList(t *testing.T) {
-	// Créer un répertoire temporaire pour les tests
+	// Create temporary directory for tests
 	tmpDir, err := os.MkdirTemp("", "get_all_dirs_test")
 	if err != nil {
 		t.Fatal(err)
