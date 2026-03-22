@@ -122,14 +122,14 @@ func TestMoveFile(t *testing.T) {
 }
 
 func TestSamePath(t *testing.T) {
-	// Créer un répertoire temporaire pour les tests
+	// Create a temporary directory for the tests
 	tmpDir, err := os.MkdirTemp("", "samepath_test")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Créer des fichiers et dossiers de test
+	// Create test files and directories
 	testFile := filepath.Join(tmpDir, "test.txt")
 	if err := os.WriteFile(testFile, []byte("test"), 0644); err != nil {
 		t.Fatal(err)
@@ -140,7 +140,7 @@ func TestSamePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Créer un lien symbolique
+	// Create a symbolic link
 	linkFile := filepath.Join(tmpDir, "link.txt")
 	if err := os.Symlink(testFile, linkFile); err != nil {
 		t.Logf("Symlink creation skipped: %v", err)
@@ -154,55 +154,55 @@ func TestSamePath(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:  "chemins identiques absolus",
+			name:  "identical absolute paths",
 			path1: testFile,
 			path2: testFile,
 			want:  true,
 		},
 		{
-			name:  "même fichier avec ./",
+			name:  "same file with ./",
 			path1: testFile,
 			path2: "./" + testFile,
 			want:  false,
 		},
 		{
-			name:  "même fichier avec ../",
+			name:  "same file with ../",
 			path1: testFile,
 			path2: filepath.Join(tmpDir, "..", filepath.Base(tmpDir), "test.txt"),
 			want:  true,
 		},
 		{
-			name:  "fichiers différents",
+			name:  "different files",
 			path1: testFile,
 			path2: filepath.Join(tmpDir, "other.txt"),
 			want:  false,
 		},
 		{
-			name:  "dossiers identiques",
+			name:  "identical directories",
 			path1: testDir,
 			path2: testDir,
 			want:  true,
 		},
 		{
-			name:  "fichier vs dossier",
+			name:  "file vs directory",
 			path1: testFile,
 			path2: testDir,
 			want:  false,
 		},
 		{
-			name:  "lien symbolique vers même fichier",
+			name:  "symlink to same file",
 			path1: testFile,
 			path2: linkFile,
 			want:  true,
 		},
 		{
-			name:  "chemin avec /.",
+			name:  "path with /.",
 			path1: testFile,
 			path2: testFile + "/.",
 			want:  true,
 		},
 		{
-			name:    "fichier inexistant",
+			name:    "non-existent file",
 			path1:   filepath.Join(tmpDir, "nonexistent1.txt"),
 			path2:   filepath.Join(tmpDir, "nonexistent2.txt"),
 			want:    false,

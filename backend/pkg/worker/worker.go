@@ -74,6 +74,7 @@ func (m *DownloadManager) Pause(downloadID string) error {
 		return errors.New("download not found")
 	}
 
+	// Safe: workers only stores *DownloadWorker values (see Start).
 	worker := value.(*DownloadWorker)
 	worker.Pause()
 	return nil
@@ -85,6 +86,7 @@ func (m *DownloadManager) Resume(downloadID string) error {
 		return errors.New("download not found")
 	}
 
+	// Safe: workers only stores *DownloadWorker values (see Start).
 	worker := value.(*DownloadWorker)
 	worker.Resume()
 	return nil
@@ -96,6 +98,7 @@ func (m *DownloadManager) Cancel(downloadID string) error {
 		return errors.New("download not found")
 	}
 
+	// Safe: workers only stores *DownloadWorker values (see Start).
 	worker := value.(*DownloadWorker)
 	worker.Cancel()
 	return nil
@@ -111,7 +114,7 @@ type DownloadWorker struct {
 	client     client.OneFichierClient
 	sseManager sse.Manager
 
-	// Contrôle via atomic (pas de mutex nécessaire!)
+	// State control via atomics (no mutex needed)
 	state atomic.Int32 // 0=running, 1=paused, 2=cancelled
 
 	ctx    context.Context
@@ -119,7 +122,7 @@ type DownloadWorker struct {
 
 	// File writing
 	file *os.File
-	mu   sync.Mutex // Uniquement pour les opérations fichier
+	mu   sync.Mutex // Only for file operations
 }
 
 const (
@@ -150,20 +153,20 @@ func NewDownloadWorker(
 	return w
 }
 
-// Pause demande la pause (thread-safe, non-bloquant)
+// Pause requests a pause (thread-safe, non-blocking).
 func (w *DownloadWorker) Pause() {
 	w.state.Store(StatePaused)
 	log.Infof("Pause requested for download %s", w.download.ID)
 }
 
-// Resume annule la pause (thread-safe, non-bloquant)
+// Resume cancels the pause (thread-safe, non-blocking).
 func (w *DownloadWorker) Resume() {
 	if w.state.CompareAndSwap(StatePaused, StateRunning) {
 		log.Infof("Resume requested for download %s", w.download.ID)
 	}
 }
 
-// Cancel annule le téléchargement (idempotent)
+// Cancel stops the download (idempotent).
 func (w *DownloadWorker) Cancel() {
 	if w.state.Swap(StateCancelled) != StateCancelled {
 		log.Infof("Cancel requested for download %s", w.download.ID)
@@ -171,24 +174,24 @@ func (w *DownloadWorker) Cancel() {
 	}
 }
 
-// IsPaused vérifie si en pause
+// IsPaused reports whether the worker is currently paused.
 func (w *DownloadWorker) IsPaused() bool {
 	return w.state.Load() == StatePaused
 }
 
-// IsCancelled vérifie si annulé
+// IsCancelled reports whether the worker has been cancelled.
 func (w *DownloadWorker) IsCancelled() bool {
 	return w.state.Load() == StateCancelled
 }
 
-// UpdateDownload met à jour les données (thread-safe)
+// UpdateDownload applies fn to the download struct (thread-safe).
 func (w *DownloadWorker) UpdateDownload(fn func(*model.Download)) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	fn(w.download)
 }
 
-// notifyProgress sauvegarde et envoie SSE
+// notifyProgress persists the current download state to the DB and broadcasts an SSE progress event.
 func (w *DownloadWorker) notifyProgress() {
 	if err := w.repo.Update(w.download); err != nil {
 		log.Errorf("Failed to update DB for download %s: %v", w.download.ID, err)
@@ -201,12 +204,9 @@ func (w *DownloadWorker) notifyProgress() {
 		CustomFileName:  w.download.CustomFileName,
 		Status:          string(w.download.Status),
 		Progress:        w.download.Progress,
-		DownloadedBytes: fmt.Sprintf("%d", w.download.DownloadedBytes),
+		DownloadedBytes: w.download.DownloadedBytes,
+		FileSize:        w.download.FileSize,
 		Speed:           w.download.Speed,
-	}
-	if w.download.FileSize != nil {
-		size := fmt.Sprintf("%d", *w.download.FileSize)
-		event.FileSize = &size
 	}
 
 	if err := w.sseManager.SendEvent("progress", event); err != nil {
@@ -214,11 +214,11 @@ func (w *DownloadWorker) notifyProgress() {
 	}
 }
 
-// Run exécute le workflow complet
+// Run executes the full download workflow sequentially.
 func (w *DownloadWorker) Run() error {
 	defer w.cleanup()
 
-	// Étapes séquentielles
+	// Sequential steps
 	if err := w.stepGetFileInfo(); err != nil {
 		return w.fail(err)
 	}
@@ -237,7 +237,7 @@ func (w *DownloadWorker) Run() error {
 	return w.complete()
 }
 
-// stepGetFileInfo récupère les infos du fichier
+// stepGetFileInfo fetches file metadata from the 1fichier API.
 func (w *DownloadWorker) stepGetFileInfo() error {
 	w.UpdateDownload(func(d *model.Download) {
 		d.Status = model.StatusRequestingInfos
@@ -262,7 +262,9 @@ func (w *DownloadWorker) stepGetFileInfo() error {
 	return nil
 }
 
-// stepGetDownloadToken récupère le token de téléchargement
+// stepGetDownloadToken fetches a time-limited download token from the 1fichier API.
+// WARNING: the token is valid for 5 minutes only. Downloads longer than 5 minutes
+// will fail mid-transfer. Token renewal on expiry is not yet implemented.
 func (w *DownloadWorker) stepGetDownloadToken() error {
 	w.UpdateDownload(func(d *model.Download) {
 		d.Status = model.StatusRequestingToken
@@ -284,7 +286,7 @@ func (w *DownloadWorker) stepGetDownloadToken() error {
 	return nil
 }
 
-// stepDownload effectue le téléchargement avec gestion pause/resume
+// stepDownload performs the actual file download with pause/resume support.
 func (w *DownloadWorker) stepDownload() error {
 	now := time.Now()
 	w.UpdateDownload(func(d *model.Download) {
@@ -299,19 +301,19 @@ func (w *DownloadWorker) stepDownload() error {
 		return errors.New("no download URL")
 	}
 
-	// Préparer le fichier
+	// Open or create the temp file
 	if err := w.prepareFile(); err != nil {
 		return err
 	}
 	defer w.closeFile()
 
-	// Boucle de téléchargement avec reprise automatique après pause
+	// Download loop: retries automatically after each pause
 	for {
 		if w.IsCancelled() {
 			return errors.New("cancelled")
 		}
 
-		// Si en pause, attendre
+		// Wait here while paused
 		if w.IsPaused() {
 			w.UpdateDownload(func(d *model.Download) {
 				d.Status = model.StatusPaused
@@ -320,7 +322,9 @@ func (w *DownloadWorker) stepDownload() error {
 
 			log.Debugf("Download %s paused, waiting for resume...", w.download.ID)
 
-			// Attente active avec vérification périodique
+			// Active wait with periodic state check.
+			// NOTE: intentional busy-wait polling every 100ms.
+			// Consider replacing with sync.Cond.Wait() if CPU usage becomes a concern.
 			for w.IsPaused() && !w.IsCancelled() {
 				time.Sleep(100 * time.Millisecond)
 			}
@@ -329,7 +333,7 @@ func (w *DownloadWorker) stepDownload() error {
 				return errors.New("cancelled")
 			}
 
-			// Reprendre
+			// Resume
 			w.UpdateDownload(func(d *model.Download) {
 				d.Status = model.StatusDownloading
 			})
@@ -337,7 +341,7 @@ func (w *DownloadWorker) stepDownload() error {
 			log.Debugf("Download %s resumed", w.download.ID)
 		}
 
-		// Télécharger un chunk
+		// Download a chunk
 		completed, err := w.downloadChunk()
 		if err != nil {
 			return err
@@ -349,19 +353,19 @@ func (w *DownloadWorker) stepDownload() error {
 	}
 }
 
-// prepareFile prépare le fichier pour l'écriture
+// prepareFile opens or creates the temp file for writing, resuming from the current offset if applicable.
 func (w *DownloadWorker) prepareFile() error {
 	tempPath, err := w.download.TempFilePath()
 	if err != nil {
 		return fmt.Errorf("failed to resolve temp path: %w", err)
 	}
 
-	// Créer le répertoire
+	// Create the directory
 	if err := os.MkdirAll(filepath.Dir(tempPath), 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	// Vérifier si fichier existe pour reprise
+	// Check if the temp file exists and matches the expected offset (resume support)
 	if w.download.DownloadedBytes > 0 {
 		stat, err := os.Stat(tempPath)
 		if err != nil || stat.Size() != w.download.DownloadedBytes {
@@ -372,7 +376,7 @@ func (w *DownloadWorker) prepareFile() error {
 		}
 	}
 
-	// Ouvrir/créer le fichier
+	// Open in append mode for resume, or create a new file
 	if w.download.DownloadedBytes > 0 {
 		w.file, err = os.OpenFile(tempPath, os.O_WRONLY|os.O_APPEND, 0644)
 	} else {
@@ -386,7 +390,7 @@ func (w *DownloadWorker) prepareFile() error {
 	return nil
 }
 
-// downloadChunk télécharge un chunk de données
+// downloadChunk downloads data from the current offset until EOF, pause, or cancel.
 func (w *DownloadWorker) downloadChunk() (completed bool, err error) {
 	reader, contentLength, statusCode, err := w.client.DownloadFile(
 		*w.download.DownloadURL,
@@ -397,10 +401,10 @@ func (w *DownloadWorker) downloadChunk() (completed bool, err error) {
 	}
 	defer reader.Close()
 
-	// Calculer la taille totale
+	// Calculate total size from metadata or response headers
 	totalSize := w.calculateTotalSize(statusCode, contentLength)
 
-	// Lire et écrire avec vérifications régulières
+	// Read and write with periodic state checks
 	buffer := make([]byte, 64*1024)
 	lastUpdate := time.Now()
 	lastBytes := w.download.DownloadedBytes
@@ -408,17 +412,17 @@ func (w *DownloadWorker) downloadChunk() (completed bool, err error) {
 	defer ticker.Stop()
 
 	for {
-		// Vérifier état
+		// Check state
 		if w.IsCancelled() {
 			return false, errors.New("cancelled")
 		}
 
 		if w.IsPaused() {
 			log.Debugf("Pause detected during download chunk for %s", w.download.ID)
-			return false, nil // Retour sans erreur, la boucle principale gérera la pause
+			return false, nil // Return without error; the outer loop handles the pause
 		}
 
-		// Mettre à jour la vitesse périodiquement
+		// Update speed periodically
 		select {
 		case <-ticker.C:
 			w.updateSpeed(&lastUpdate, &lastBytes)
@@ -429,12 +433,12 @@ func (w *DownloadWorker) downloadChunk() (completed bool, err error) {
 		n, readErr := reader.Read(buffer)
 
 		if n > 0 {
-			// Écrire
+			// Write
 			if _, err := w.file.Write(buffer[:n]); err != nil {
 				return false, fmt.Errorf("failed to write: %w", err)
 			}
 
-			// Mettre à jour progression
+			// Update progress
 			w.UpdateDownload(func(d *model.Download) {
 				d.DownloadedBytes += int64(n)
 				if totalSize > 0 {
@@ -445,7 +449,7 @@ func (w *DownloadWorker) downloadChunk() (completed bool, err error) {
 
 		if readErr == io.EOF {
 			w.updateSpeed(&lastUpdate, &lastBytes)
-			return true, nil // Téléchargement terminé
+			return true, nil // Download complete
 		}
 
 		if readErr != nil {
@@ -454,7 +458,9 @@ func (w *DownloadWorker) downloadChunk() (completed bool, err error) {
 	}
 }
 
-// calculateTotalSize calcule la taille totale
+// calculateTotalSize resolves the total file size from known metadata or response headers.
+// If the server returns 200 instead of 206 (Partial Content), it does not support Range
+// requests; the offset is reset to zero and the download restarts from the beginning.
 func (w *DownloadWorker) calculateTotalSize(statusCode int, contentLength int64) int64 {
 	if w.download.FileSize != nil && *w.download.FileSize > 0 {
 		return *w.download.FileSize
@@ -480,7 +486,7 @@ func (w *DownloadWorker) calculateTotalSize(statusCode int, contentLength int64)
 	return totalSize
 }
 
-// updateSpeed met à jour la vitesse
+// updateSpeed recalculates download speed (bytes/sec) since the last call.
 func (w *DownloadWorker) updateSpeed(lastUpdate *time.Time, lastBytes *int64) {
 	duration := time.Since(*lastUpdate).Seconds()
 	if duration > 0 {
@@ -495,7 +501,7 @@ func (w *DownloadWorker) updateSpeed(lastUpdate *time.Time, lastBytes *int64) {
 	}
 }
 
-// closeFile ferme le fichier
+// closeFile flushes and closes the temp file.
 func (w *DownloadWorker) closeFile() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -507,15 +513,15 @@ func (w *DownloadWorker) closeFile() {
 	}
 }
 
-// complete marque comme terminé
+// complete renames the temp file to its final path and marks the download as completed.
 func (w *DownloadWorker) complete() error {
 	tempPath, _ := w.download.TempFilePath()
 	finalPath, _ := w.download.FinalFilePath()
 
-	// Supprimer le fichier final s'il existe
+	// Remove the final file if it already exists (overwrite)
 	os.Remove(finalPath)
 
-	// Renommer
+	// Rename temp to final path
 	if err := os.Rename(tempPath, finalPath); err != nil {
 		return fmt.Errorf("failed to finalize: %w", err)
 	}
@@ -532,7 +538,7 @@ func (w *DownloadWorker) complete() error {
 	return nil
 }
 
-// fail marque comme échoué
+// fail marks the download as failed and broadcasts the error via SSE.
 func (w *DownloadWorker) fail(err error) error {
 	errMsg := err.Error()
 	w.UpdateDownload(func(d *model.Download) {
@@ -546,7 +552,7 @@ func (w *DownloadWorker) fail(err error) error {
 	return err
 }
 
-// cancelCleanup nettoie après annulation
+// cancelCleanup removes the temp file and marks the download as cancelled.
 func (w *DownloadWorker) cancelCleanup() error {
 	tempPath, _ := w.download.TempFilePath()
 	os.Remove(tempPath)
@@ -560,7 +566,7 @@ func (w *DownloadWorker) cancelCleanup() error {
 	return nil
 }
 
-// cleanup nettoie les ressources
+// cleanup closes open files and recovers from panics.
 func (w *DownloadWorker) cleanup() {
 	w.closeFile()
 

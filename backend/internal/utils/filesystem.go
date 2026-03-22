@@ -34,9 +34,9 @@ func MoveFile(src, dst string) error {
 	return nil
 }
 
-// SamePath vérifie si deux chemins (relatifs ou absolus) pointent vers le même fichier/dossier
+// SamePath reports whether two paths (relative or absolute) point to the same file or directory.
 func SamePath(path1, path2 string) (bool, error) {
-	// Convertir les deux chemins en chemins absolus
+	// Resolve both paths to absolute
 	abs1, err := filepath.Abs(path1)
 	if err != nil {
 		return false, err
@@ -47,20 +47,20 @@ func SamePath(path1, path2 string) (bool, error) {
 		return false, err
 	}
 
-	// Nettoyer les chemins (résoudre .. et . et normaliser les séparateurs)
+	// Clean paths (resolve .., . and normalize separators)
 	clean1 := filepath.Clean(abs1)
 	clean2 := filepath.Clean(abs2)
 
-	// Comparer les chemins nettoyés
+	// Compare cleaned paths
 	if clean1 == clean2 {
 		return true, nil
 	}
 
-	// Pour une vérification plus robuste, on peut aussi utiliser os.SameFile
-	// qui compare les inodes sur Unix et les file IDs sur Windows
+	// For a more robust check, use os.SameFile
+	// which compares inodes on Unix and file IDs on Windows
 	info1, err := os.Stat(clean1)
 	if err != nil {
-		// Si le fichier n'existe pas, on se fie à la comparaison des chemins
+		// If the file does not exist, fall back to path comparison
 		if os.IsNotExist(err) {
 			return false, nil
 		}
@@ -75,7 +75,7 @@ func SamePath(path1, path2 string) (bool, error) {
 		return false, err
 	}
 
-	// Utiliser os.SameFile pour la comparaison physique
+	// Use os.SameFile for physical inode comparison
 	return os.SameFile(info1, info2), nil
 }
 

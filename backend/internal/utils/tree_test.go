@@ -14,14 +14,14 @@ import (
 func TestBuildDirTree(t *testing.T) {
 	config.Load()
 
-	// Créer un répertoire temporaire pour les tests
+	// Create a temporary directory for the tests
 	tmpDir, err := os.MkdirTemp("", "test_build_dir_tree")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Setup: créer une structure de répertoires et fichiers
+	// Setup: create a directory and file structure
 	// tmpDir/
 	//   ├── file1.txt
 	//   ├── subdir1/
@@ -30,7 +30,7 @@ func TestBuildDirTree(t *testing.T) {
 	//   │       └── file3.txt
 	//   └── emptydir/
 
-	// Créer les fichiers et répertoires
+	// Create files and directories
 	file1 := filepath.Join(tmpDir, "file1.txt")
 	if err := os.WriteFile(file1, []byte("content1"), 0644); err != nil {
 		t.Fatalf("Failed to create file1: %v", err)
@@ -95,7 +95,7 @@ func TestBuildDirTree(t *testing.T) {
 				if len(node.Children) != 3 {
 					t.Errorf("expected 3 children, got %d", len(node.Children))
 				}
-				// Vérifier que les enfants sont présents
+				// Verify that expected children are present
 				foundFile1 := false
 				foundSubdir1 := false
 				foundEmptydir := false
@@ -200,7 +200,7 @@ func TestBuildDirTree(t *testing.T) {
 				if tt.validateResult != nil {
 					tt.validateResult(t, result)
 				}
-				// Vérifications communes
+				// Common assertions
 				if result.Path != path {
 					t.Errorf("expected Path '%s', got '%s'", path, result.Path)
 				}
@@ -238,7 +238,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 		rootPath string
 	}{
 		{
-			name: "dossier vide",
+			name: "empty directory",
 			setup: func(root string) error {
 				return nil
 			},
@@ -246,7 +246,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "un seul sous-dossier",
+			name: "single subdirectory",
 			setup: func(root string) error {
 				return os.Mkdir(filepath.Join(root, "subdir"), 0755)
 			},
@@ -254,7 +254,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "plusieurs sous-dossiers au même niveau",
+			name: "multiple subdirectories at same level",
 			setup: func(root string) error {
 				dirs := []string{"dir1", "dir2", "dir3"}
 				for _, dir := range dirs {
@@ -268,7 +268,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "dossiers imbriqués",
+			name: "nested directories",
 			setup: func(root string) error {
 				if err := os.MkdirAll(filepath.Join(root, "a", "b", "c"), 0755); err != nil {
 					return err
@@ -279,9 +279,9 @@ func TestBuildDirTreeAsList(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "structure complexe avec fichiers",
+			name: "complex structure with files",
 			setup: func(root string) error {
-				// Créer des dossiers
+				// Create directories
 				dirs := []string{
 					"dir1",
 					filepath.Join("dir1", "subdir1"),
@@ -295,7 +295,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 					}
 				}
 
-				// Créer des fichiers (ne doivent pas être listés)
+				// Create files (should not be listed)
 				files := []string{
 					"file.txt",
 					filepath.Join("dir1", "file1.txt"),
@@ -319,7 +319,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "dossiers avec noms spéciaux",
+			name: "directories with special names",
 			setup: func(root string) error {
 				dirs := []string{
 					".hidden",
@@ -343,7 +343,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:     "chemin inexistant",
+			name:     "non-existent path",
 			setup:    func(root string) error { return nil },
 			want:     nil,
 			wantErr:  true,
@@ -353,7 +353,7 @@ func TestBuildDirTreeAsList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Créer un sous-dossier temporaire pour chaque test
+			// Create a temporary subdirectory for each test
 			testDir := tmpDir
 			if tt.rootPath == "" {
 				testDir = filepath.Join(tmpDir, tt.name)
@@ -364,17 +364,17 @@ func TestBuildDirTreeAsList(t *testing.T) {
 				testDir = tt.rootPath
 			}
 
-			// Configurer la structure de test
+			// Set up the test structure
 			if tt.setup != nil {
 				if err := tt.setup(testDir); err != nil {
 					t.Fatal(err)
 				}
 			}
 
-			// Exécuter la fonction
+			// Run the function
 			got, err := BuildDirTreeAsList(testDir)
 
-			// Vérifier l'erreur
+			// Check error
 			if (err != nil) != tt.wantErr {
 				t.Errorf("BuildDirTreeAsList() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -384,16 +384,16 @@ func TestBuildDirTreeAsList(t *testing.T) {
 				return
 			}
 
-			// Trier pour la comparaison
+			// Sort for comparison
 			sort.Strings(got)
 			sort.Strings(tt.want)
 
-			// Normaliser les slices vides (nil vs []string{})
+			// Normalize empty slices (nil vs []string{})
 			if len(got) == 0 && len(tt.want) == 0 {
-				return // Les deux sont vides, c'est OK
+				return // Both are empty, that's OK
 			}
 
-			// Comparer les résultats
+			// Compare results
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("BuildDirTreeAsList() = %v, want %v", got, tt.want)
 			}
@@ -412,7 +412,7 @@ func TestBuildDirTreeAsListPermissions(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Créer un dossier sans permissions de lecture
+	// Create a directory without read permissions
 	noReadDir := filepath.Join(tmpDir, "noread")
 	if err := os.Mkdir(noReadDir, 0755); err != nil {
 		t.Fatal(err)
@@ -423,11 +423,11 @@ func TestBuildDirTreeAsListPermissions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Retirer les permissions de lecture
+	// Remove read permissions
 	if err := os.Chmod(noReadDir, 0000); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chmod(noReadDir, 0755) // Restaurer pour le nettoyage
+	defer os.Chmod(noReadDir, 0755) // Restore permissions for cleanup
 
 	_, err = BuildDirTreeAsList(tmpDir)
 	if err == nil {

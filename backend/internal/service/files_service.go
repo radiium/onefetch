@@ -85,24 +85,24 @@ func (fs *filesService) DeleteDir(path string) (*model.FSNode, error) {
 	return fs.getDirTree()
 }
 
-// DownloadFileInline télécharge le fichier en mode inline (ouverture dans le navigateur si possible)
+// DownloadFileInline serves the file inline (opens in browser when possible).
 // func DownloadFileInline(c *fiber.Ctx, filePath string) error {
-// 	// Vérifier si le fichier existe
+// 	// Check if the file exists
 // 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 // 					return nil, errors.NotFound(fmt.Sprintf("directory not found: %s", path))
 
 // 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-// 			"error": "Fichier non trouvé",
+// 			"error": "file not found",
 // 		})
 // 	}
 
-// 	// Obtenir le nom du fichier
+// 	// Get the filename
 // 	fileName := filepath.Base(filePath)
 
-// 	// Définir les en-têtes pour affichage inline
+// 	// Set headers for inline display
 // 	c.Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", fileName))
 
-// 	// Envoyer le fichier (Fiber détectera automatiquement le Content-Type)
+// 	// Send the file (Fiber auto-detects Content-Type)
 // 	return c.SendFile(filePath)
 // }
 

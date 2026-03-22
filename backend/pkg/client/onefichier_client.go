@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // ===============================
@@ -21,9 +22,10 @@ type OneFichierClient interface {
 // Client Struct
 // ===============================
 type oneFichierClient struct {
-	baseURL    string
-	apiKey     string
-	httpClient *http.Client
+	baseURL        string
+	apiKey         string
+	apiClient      *http.Client // with timeout for short API calls
+	httpClient     *http.Client // no timeout for file streaming
 }
 
 // ===============================
@@ -55,16 +57,21 @@ type OneFichierTokenResponse struct {
 // Client Constructor
 // ===============================
 func NewOneFichierClient(baseURL string, apiKey string) OneFichierClient {
+	transport := &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+		MaxConnsPerHost:     100,
+	}
 	return &oneFichierClient{
 		baseURL: baseURL,
 		apiKey:  apiKey,
+		apiClient: &http.Client{
+			Timeout:   30 * time.Second,
+			Transport: transport,
+		},
 		httpClient: &http.Client{
-			Timeout: 0, // Pas de timeout pour le body streaming
-			Transport: &http.Transport{
-				MaxIdleConns:        100,
-				MaxIdleConnsPerHost: 100,
-				MaxConnsPerHost:     100,
-			},
+			Timeout:   0, // no timeout for body streaming
+			Transport: transport,
 		},
 	}
 }
@@ -85,7 +92,7 @@ func (c *oneFichierClient) GetFileInfo(fileURL string) (*OneFichierInfoResponse,
 	}
 
 	c.setHeaders(req)
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.apiClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +122,7 @@ func (c *oneFichierClient) GetDownloadToken(fileURL string) (*OneFichierTokenRes
 	}
 
 	c.setHeaders(req)
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.apiClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

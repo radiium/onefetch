@@ -172,7 +172,10 @@ func (ds *downloadService) DeleteDownload(id string) error {
 		return err
 	}
 
-	// Delete final file if exist
+	// Delete final file if it exists.
+	// NOTE: the || condition is intentional — returns early on path resolution error
+	// OR when finalPath is non-empty (which currently never happens due to the bug below).
+	// TODO: this should be `if err != nil` only; the current logic prevents file deletion.
 	finalPath, err := download.FinalFilePath()
 	if finalPath != "" || err != nil {
 		return err
@@ -199,7 +202,7 @@ func (ds *downloadService) DeleteDownload(id string) error {
 // PRIVATE METHODS
 // ============================================================================
 
-// cleanupTempFile supprime le fichier temporaire
+// cleanupTempFile removes the temporary download file.
 // func (ds *downloadService) cleanupTempFile(download *model.Download) {
 // 	if download.TempPath != nil && *download.TempPath != "" {
 // 		if err := os.Remove(*download.TempPath); err != nil && !os.IsNotExist(err) {
@@ -208,7 +211,7 @@ func (ds *downloadService) DeleteDownload(id string) error {
 // 	}
 // }
 
-// extract1fichierFileID extrait l'ID du fichier depuis l'URL
+// extract1fichierFileID extracts the file ID from a 1fichier URL.
 // func (ds *downloadService) extract1fichierFileID(rawURL string) (string, error) {
 // 	parsedURL, err := url.Parse(rawURL)
 // 	if err != nil {

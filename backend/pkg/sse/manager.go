@@ -119,7 +119,7 @@ func (m *manager) IsClosed() bool {
 	return m.closed
 }
 
-// Ajoute un client
+// addClient registers a new client in the manager.
 func (m *manager) addClient(client *Client) {
 	m.clientsMux.Lock()
 	defer m.clientsMux.Unlock()
@@ -130,7 +130,7 @@ func (m *manager) addClient(client *Client) {
 	}
 }
 
-// Supprime un client
+// removeClient closes and removes a client from the manager.
 func (m *manager) removeClient(clientID string) {
 	m.clientsMux.Lock()
 	defer m.clientsMux.Unlock()
@@ -168,7 +168,10 @@ func (m *manager) SendEvent(event string, data interface{}) error {
 	return m.broadcastEvent(sseEvent)
 }
 
-// broadcastEvent broadcasts an event to all clients
+// broadcastEvent broadcasts an event to all clients.
+// WARNING: holds clientsMux.RLock for the entire send loop.
+// Event handlers or any code called during broadcast must NOT acquire clientsMux.Lock
+// (e.g. via removeClient), otherwise a deadlock will occur.
 func (m *manager) broadcastEvent(sseEvent *Event) error {
 	m.clientsMux.RLock()
 	defer m.clientsMux.RUnlock()
@@ -212,7 +215,7 @@ func (m *manager) Close() error {
 	m.clientsMux.Lock()
 	defer m.clientsMux.Unlock()
 
-	// Fermer tous les clients
+	// Close all client channels
 	for _, client := range m.clients {
 		close(client.Events)
 	}
@@ -230,9 +233,9 @@ func (m *manager) Print() {
 	log.Info("[SSEManager] ==CHANNEL CREATED==\nName: %s\n", m.Name)
 }
 
-// Handler pour gérer une connexion SSE
+// Handler manages an incoming SSE connection for the lifetime of the request.
 func (m *manager) Handler(c *fiber.Ctx) error {
-	// Vérifier si le manager est fermé
+	// Reject new connections if the manager is already closed
 	if m.IsClosed() {
 		return c.Status(fiber.StatusServiceUnavailable).SendString("SSE channel is closed")
 	}
@@ -244,7 +247,7 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 	c.Set("Transfer-Encoding", "chunked")
 	c.Set("X-Accel-Buffering", "no") // Disable nginx buffering
 
-	// Créer un nouveau client pour cette connexion
+	// Create a new client for this connection
 	client := &Client{
 		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
 		Events:    make(chan *Event, m.Config.BufferSize),
@@ -256,7 +259,7 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 		// Fire OnConnect Event Handlers
 		m.FireHandlers(c, "connect")
 
-		// Assurer le nettoyage à la fin
+		// Ensure cleanup on disconnect
 		defer func() {
 			duration := time.Since(client.ConnectAt)
 			if m.Config.Debug {
@@ -266,7 +269,7 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 			m.removeClient(client.ID)
 		}()
 
-		// Ticker pour envoyer des heartbeats si activé
+		// Ticker for periodic heartbeats (if enabled)
 		var ticker *time.Ticker
 		var tickerChan <-chan time.Time
 
@@ -276,11 +279,11 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 			defer ticker.Stop()
 		}
 
-		// Boucle de lecture des événements
+		// Event read loop
 		for {
 			select {
 			case <-tickerChan:
-				// Envoyer un commentaire SSE comme heartbeat
+				// Send an SSE comment as heartbeat
 				if _, err := w.WriteString(": heartbeat\n\n"); err != nil {
 					if m.Config.Debug {
 						log.Infof("[SSEManager] Client %s disconnected (heartbeat write failed)", client.ID)

@@ -209,7 +209,7 @@ func setupTestConfig(t *testing.T) string {
 	return tempDir
 }
 
-// waitForWorkerCompletion attend que le worker soit supprimé de la map (fin d'exécution)
+// waitForWorkerCompletion blocks until the worker is removed from the manager map (execution complete).
 func waitForWorkerCompletion(t *testing.T, manager *DownloadManager, downloadID string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	ticker := time.NewTicker(10 * time.Millisecond)
@@ -220,7 +220,7 @@ func waitForWorkerCompletion(t *testing.T, manager *DownloadManager, downloadID 
 		case <-ticker.C:
 			_, exists := manager.workers.Load(downloadID)
 			if !exists {
-				// Worker terminé et supprimé
+				// Worker done and removed
 				return
 			}
 			if time.Now().After(deadline) {
@@ -248,7 +248,7 @@ func TestDownloadManager_Start(t *testing.T) {
 			APIKey1fichier: "test-api-key",
 		}, nil)
 
-		// Mock pour stepGetFileInfo
+		// Mock for stepGetFileInfo
 		mockClient.On("GetFileInfo", "https://1fichier.com/test").Return(&client.OneFichierInfoResponse{
 			Filename:    "test.pdf",
 			Size:        int64(1024),
@@ -256,12 +256,12 @@ func TestDownloadManager_Start(t *testing.T) {
 			ContentType: "application/pdf",
 		}, nil)
 
-		// Mock pour stepGetDownloadToken
+		// Mock for stepGetDownloadToken
 		mockClient.On("GetDownloadToken", "https://1fichier.com/test").Return(&client.OneFichierTokenResponse{
 			URL: "https://download.1fichier.com/xyz",
 		}, nil)
 
-		// Mock repo.Update pour tous les appels
+		// Mock repo.Update for all calls
 		mockRepo.On("Update", mock.MatchedBy(func(d *model.Download) bool {
 			return d.ID == "test-id"
 		})).Return(nil)
@@ -278,24 +278,24 @@ func TestDownloadManager_Start(t *testing.T) {
 			Type:    model.TypeMovie,
 		}
 
-		// Créer manuellement le worker avec le mock client au lieu de passer par manager.Start
+		// Manually create the worker with a mock client instead of going through manager.Start
 		worker := NewDownloadWorker(ctx, download, mockRepo, mockClient, mockSSE)
 		manager.workers.Store(download.ID, worker)
 
-		// Lancer le worker dans une goroutine (comme manager.Start le ferait)
+		// Launch the worker in a goroutine (as manager.Start would)
 		go func() {
 			defer manager.workers.Delete(download.ID)
 			worker.Run()
 		}()
 
-		// Attendre que le worker se termine
+		// Wait for the worker to finish
 		waitForWorkerCompletion(t, manager, download.ID, 5*time.Second)
 
-		// Vérifier que le worker a été supprimé après completion
+		// Verify the worker was removed after completion
 		_, exists := manager.workers.Load(download.ID)
 		assert.False(t, exists)
 
-		// Vérifier que les mocks ont été appelés
+		// Verify that mocks were called
 		mockClient.AssertExpectations(t)
 		mockRepo.AssertExpectations(t)
 		mockSSE.AssertExpectations(t)
@@ -323,7 +323,7 @@ func TestDownloadManager_Start(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "API key not configured")
 
-		// Le worker ne doit pas être créé en cas d'erreur
+		// Worker must not be created on error
 		_, exists := manager.workers.Load(download.ID)
 		assert.False(t, exists)
 	})
@@ -348,7 +348,7 @@ func TestDownloadManager_Start(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to get settings")
 
-		// Le worker ne doit pas être créé en cas d'erreur
+		// Worker must not be created on error
 		_, exists := manager.workers.Load(download.ID)
 		assert.False(t, exists)
 	})
@@ -795,12 +795,12 @@ func TestDownloadWorker_DownloadChunk(t *testing.T) {
 
 		worker := NewDownloadWorker(ctx, download, mockRepo, mockClient, mockSSE)
 
-		// Préparer le fichier
+		// Prepare the file
 		err := worker.prepareFile()
 		require.NoError(t, err)
 		defer worker.closeFile()
 
-		// Mock le client
+		// Mock the client
 		testData := []byte("test data content")
 		reader := &MockReadCloser{reader: strings.NewReader(string(testData))}
 		mockClient.On("DownloadFile", downloadURL, int64(0)).Return(
@@ -810,12 +810,12 @@ func TestDownloadWorker_DownloadChunk(t *testing.T) {
 			nil,
 		)
 
-		// Mock Update pour chaque appel
+		// Mock Update for each call
 		mockRepo.On("Update", mock.MatchedBy(func(d *model.Download) bool {
 			return d.ID == download.ID
 		})).Return(nil)
 
-		// Mock SendEvent pour chaque appel
+		// Mock SendEvent for each call
 		mockSSE.On("SendEvent", "progress", mock.Anything).Return(nil)
 
 		completed, err := worker.downloadChunk()
@@ -905,7 +905,7 @@ func TestDownloadWorker_Complete(t *testing.T) {
 		Type:     model.TypeMovie,
 	}
 
-	// Créer le fichier temp
+	// Create the temp file
 	tempPath, _ := download.TempFilePath()
 	os.MkdirAll(filepath.Dir(tempPath), 0755)
 	os.WriteFile(tempPath, []byte("test content"), 0644)
@@ -919,12 +919,12 @@ func TestDownloadWorker_Complete(t *testing.T) {
 	assert.Equal(t, float64(100), download.Progress)
 	assert.NotNil(t, download.CompletedAt)
 
-	// Vérifier que le fichier final existe
+	// Verify that the final file exists
 	finalPath, _ := download.FinalFilePath()
 	_, err = os.Stat(finalPath)
 	assert.NoError(t, err)
 
-	// Vérifier que le fichier temp n'existe plus
+	// Verify that the temp file no longer exists
 	_, err = os.Stat(tempPath)
 	assert.True(t, os.IsNotExist(err))
 }
@@ -977,7 +977,7 @@ func TestDownloadWorker_CancelCleanup(t *testing.T) {
 		Type:     model.TypeMovie,
 	}
 
-	// Créer le fichier temp
+	// Create the temp file
 	tempPath, _ := download.TempFilePath()
 	os.MkdirAll(filepath.Dir(tempPath), 0755)
 	os.WriteFile(tempPath, []byte("test"), 0644)
@@ -989,7 +989,7 @@ func TestDownloadWorker_CancelCleanup(t *testing.T) {
 
 	assert.Equal(t, model.StatusCancelled, download.Status)
 
-	// Vérifier que le fichier temp est supprimé
+	// Verify that the temp file was deleted
 	_, err = os.Stat(tempPath)
 	assert.True(t, os.IsNotExist(err))
 }
