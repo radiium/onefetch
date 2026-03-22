@@ -86,7 +86,7 @@ func (h *downloadHandler) ListDownloads(c *fiber.Ctx) error {
 	downloads, total, err := h.service.ListDownloads(statusFilters, typeFilters, page, limit)
 	if err != nil {
 		return errors.HandleError(c,
-			fmt.Errorf("failed to list downloads: status=%s; typeFilters=%s; page=%d; limit=%d; error=%s", statusFilters, typeFilters, page, limit, err.Error()),
+			fmt.Errorf("failed to list downloads: status=%v; typeFilters=%v; page=%d; limit=%d; error=%s", statusFilters, typeFilters, page, limit, err.Error()),
 		)
 	}
 

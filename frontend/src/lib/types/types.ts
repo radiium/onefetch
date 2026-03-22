@@ -23,8 +23,8 @@ export interface Download {
 	type: DownloadType;
 	status: DownloadStatus;
 	progress: number;
-	downloadedBytes: string;
-	fileSize?: string;
+	downloadedBytes: number;
+	fileSize?: number;
 	speed?: number;
 	errorMessage?: string;
 	createdAt: string;
@@ -59,8 +59,8 @@ export interface DownloadProgressEvent {
 	customFileName?: string;
 	status: DownloadStatus;
 	progress: number;
-	downloadedBytes: string;
-	fileSize?: string;
+	downloadedBytes: number;
+	fileSize?: number;
 	speed?: number;
 }
 

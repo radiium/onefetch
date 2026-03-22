@@ -134,8 +134,8 @@ type DownloadProgressEvent struct {
 	CustomFileName  *string  `json:"customFileName"`
 	Status          string   `json:"status"`
 	Progress        float64  `json:"progress"`
-	DownloadedBytes string   `json:"downloadedBytes"`
-	FileSize        *string  `json:"fileSize"`
+	DownloadedBytes int64    `json:"downloadedBytes"`
+	FileSize        *int64   `json:"fileSize"`
 	Speed           *float64 `json:"speed"`
 }
 

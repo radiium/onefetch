@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // ===============================
@@ -46,7 +47,7 @@ func NewJellyfinClient(baseURL string, apiKey string) JellyfinClient {
 		baseURL: baseURL,
 		apiKey:  apiKey,
 		httpClient: &http.Client{
-			Timeout: 0, // Pas de timeout pour le body streaming
+			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
 				MaxIdleConns:        100,
 				MaxIdleConnsPerHost: 100,
@@ -73,7 +74,10 @@ func (c *jellyfinClient) GetVirtualFolders(ctx context.Context) ([]VirtualFolder
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		data, _ := io.ReadAll(resp.Body)
+		data, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return nil, fmt.Errorf("error %d (failed to read body: %w)", resp.StatusCode, readErr)
+		}
 		return nil, fmt.Errorf("error %d: %s", resp.StatusCode, string(data))
 	}
 
@@ -102,7 +106,10 @@ func (c *jellyfinClient) RefreshLibrary(ctx context.Context) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
-		data, _ := io.ReadAll(resp.Body)
+		data, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return fmt.Errorf("error %d (failed to read body: %w)", resp.StatusCode, readErr)
+		}
 		return fmt.Errorf("error %d: %s", resp.StatusCode, string(data))
 	}
 
@@ -126,7 +133,10 @@ func (c *jellyfinClient) RefreshItem(ctx context.Context, itemId string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
-		data, _ := io.ReadAll(resp.Body)
+		data, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return fmt.Errorf("error %d (failed to read body: %w)", resp.StatusCode, readErr)
+		}
 		return fmt.Errorf("error %d: %s", resp.StatusCode, string(data))
 	}
 
