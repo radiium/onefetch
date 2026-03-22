@@ -4,7 +4,7 @@ import { sveltePreprocess } from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	preprocess: [sveltePreprocess(), sveltePhosphorOptimize(),],
+	preprocess: [sveltePreprocess(), sveltePhosphorOptimize()],
 	kit: { adapter: adapter() }
 };
 

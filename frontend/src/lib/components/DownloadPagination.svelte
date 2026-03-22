@@ -13,7 +13,7 @@
 {#if pagination}
 	{currentPage}
 	<Flexbox gap="3">
-		{#each { length: pagination.totalPages } as _, i (i)}
+		{#each { length: pagination.totalPages }, i (i)}
 			{@const page = i + 1}
 			<Button
 				size="2"

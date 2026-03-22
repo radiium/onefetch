@@ -62,7 +62,12 @@
 	</div>
 </PageLayout>
 
-<Dialog bind:isOpen={newIsOpen} style="width: 500px; max-width: 90vw;" closeOnBackdropClick closeOnEscape>
+<Dialog
+	bind:isOpen={newIsOpen}
+	style="width: 500px; max-width: 90vw;"
+	closeOnBackdropClick
+	closeOnEscape
+>
 	<Flexbox direction="column" gap="3">
 		<h2 class="my-0">Add new folder</h2>
 		<div>
@@ -75,9 +80,14 @@
 	</Flexbox>
 </Dialog>
 
-<Dialog bind:isOpen={deleteIsOpen} style="width: 500px; max-width: 90vw;" closeOnBackdropClick closeOnEscape>
+<Dialog
+	bind:isOpen={deleteIsOpen}
+	style="width: 500px; max-width: 90vw;"
+	closeOnBackdropClick
+	closeOnEscape
+>
 	<Flexbox direction="column" gap="3">
-		<h2 class="my-0">Delete</h2>∏
+		<h2 class="my-0">Delete</h2>
 		<div>
 			Do you want delete {deleteCurrent?.name} item ?
 		</div>

@@ -1,7 +1,16 @@
 <script lang="ts">
 	import CaretDownIcon from 'phosphor-svelte/lib/CaretDownIcon';
 	import FunnelIcon from 'phosphor-svelte/lib/FunnelIcon';
-	import { Badge, Button, Checkbox, Flexbox, Floating, Separator, type ButtonProps, type FloatingProps } from 'svxui';
+	import {
+		Badge,
+		Button,
+		Checkbox,
+		Flexbox,
+		Floating,
+		Separator,
+		type ButtonProps,
+		type FloatingProps
+	} from 'svxui';
 
 	type Props = {
 		name: string;

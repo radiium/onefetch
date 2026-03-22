@@ -80,7 +80,6 @@
 					{@const item = accordion.getItem(fileNode.path)}
 					<!-- Item -->
 					<Flexbox direction="column" class="w-100" {...item.itemAttrs}>
-					
 						<!-- Heading -->
 						<Button
 							variant="clear"

@@ -39,7 +39,7 @@ export function useSSE<T>(url: string, options: UseSSEOptions<T> = {}): UseSSERe
 		};
 
 		source.onerror = () => {
-			error = new Error('Erreur de connexion SSE');
+			error = new Error('SSE connection error');
 			connected = false;
 			onError?.(error);
 		};

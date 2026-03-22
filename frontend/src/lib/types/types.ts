@@ -31,7 +31,7 @@ export interface Download {
 	startedAt?: string;
 	UpdatedAt: string;
 	completedAt?: string;
-	isAchived: boolean;
+	isArchived: boolean;
 }
 
 export interface Pagination {

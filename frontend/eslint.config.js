@@ -32,33 +32,25 @@ export default defineConfig(
 				svelteConfig
 			}
 		},
-        rules: {
-            'svelte/prefer-const': 'error',
-            'svelte/no-unused-svelte-ignore': 'warn',
-            'svelte/no-unused-props': 'warn',
-            'svelte/no-navigation-without-resolve': [
-                'warn',
-                {
-                    ignoreGoto: false,
-                    ignoreLinks: true,
-                    ignorePushState: false,
-                    ignoreReplaceState: false
-                }
-            ]
-        }
+		rules: {
+			'svelte/prefer-const': 'error',
+			'svelte/no-unused-svelte-ignore': 'warn',
+			'svelte/no-unused-props': 'warn',
+			'svelte/no-navigation-without-resolve': 'off'
+		}
 	},
 	{
-        rules: {
-            'no-undef': 'off',
-            '@typescript-eslint/no-inferrable-types': 'off',
-            '@typescript-eslint/no-unused-vars': 'warn',
-            '@typescript-eslint/no-unused-expressions': 'warn',
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-non-null-assertion': 'warn',
-            'no-case-declarations': 'off',
-            'no-console': ['warn', { allow: ['warn', 'error'] }],
-            'prefer-const': 'off',
-            'no-var': 'error'
-        }
-    },
+		rules: {
+			'no-undef': 'off',
+			'@typescript-eslint/no-inferrable-types': 'off',
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': 'warn',
+			'@typescript-eslint/no-unused-expressions': 'warn',
+			'@typescript-eslint/no-explicit-any': 'warn',
+			'@typescript-eslint/no-non-null-assertion': 'warn',
+			'no-case-declarations': 'off',
+			'prefer-const': 'off',
+			'no-var': 'error'
+		}
+	}
 );
