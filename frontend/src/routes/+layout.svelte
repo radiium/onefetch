@@ -2,12 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { asset } from '$app/paths';
 	import NavButton from '$lib/components/NavButton.svelte';
-	import Archive from 'phosphor-svelte/lib/Archive';
-	import Folders from 'phosphor-svelte/lib/Folders';
-	import Gear from 'phosphor-svelte/lib/Gear';
+	import ArchiveIcon from 'phosphor-svelte/lib/ArchiveIcon';
+	import FoldersIcon from 'phosphor-svelte/lib/FoldersIcon';
+	import GearIcon from 'phosphor-svelte/lib/GearIcon';
 	import IconContext from 'phosphor-svelte/lib/IconContext';
-	import Plus from 'phosphor-svelte/lib/Plus';
-	import Queue from 'phosphor-svelte/lib/Queue';
+	import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
+	import QueueIcon from 'phosphor-svelte/lib/QueueIcon';
 	import { Button, Flexbox, Separator, Text, ThemeRootProvider } from 'svxui';
 	import 'svxui/styles/normalize.css';
 	import 'svxui/styles/tokens.css';
@@ -38,24 +38,24 @@
 						goto('/');
 					}}
 				>
-					<Plus size="1.2rem" />
+					<PlusIcon size="1.2rem" />
 					<span>New task</span>
 				</Button>
 
 				<Separator size="4" class="my-4" />
 
 				<NavButton route="/active" title="Active downloads">
-					<Queue size="1.2rem" />
+					<QueueIcon size="1.2rem" />
 					<span>Active</span>
 				</NavButton>
 
 				<NavButton route="/history" title="Downloads history">
-					<Archive size="1.2rem" />
+					<ArchiveIcon size="1.2rem" />
 					<span>history</span>
 				</NavButton>
 
 				<NavButton route="/files" title="Downloaded files">
-					<Folders size="1.2rem" />
+					<FoldersIcon size="1.2rem" />
 					<span>Files</span>
 				</NavButton>
 
@@ -63,7 +63,7 @@
 				<Separator size="4" class="my-4" />
 
 				<NavButton route="/settings" title="Settings">
-					<Gear size="1.2rem" />
+					<GearIcon size="1.2rem" />
 					<span>Settings</span>
 				</NavButton>
 			</aside>

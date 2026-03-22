@@ -6,9 +6,9 @@
 	import { formatRemainingTime } from '$lib/utils/format-remaining-time';
 	import { statusColor } from '$lib/utils/status-color';
 	import { typeIcons } from '$lib/utils/type-icons';
-	import Pause from 'phosphor-svelte/lib/Pause';
-	import Play from 'phosphor-svelte/lib/Play';
-	import X from 'phosphor-svelte/lib/X';
+	import PauseIcon from 'phosphor-svelte/lib/PauseIcon';
+	import PlayIcon from 'phosphor-svelte/lib/PlayIcon';
+	import XIcon from 'phosphor-svelte/lib/XIcon';
 	import { Badge, Button, Flexbox, Panel, Text } from 'svxui';
 	import ProgressBar from './ProgressBar.svelte';
 
@@ -110,19 +110,19 @@
 				<Flexbox gap="2" align="end">
 					{#if download.status === DownloadStatus.PAUSED}
 						<Button size="3" variant="soft" iconOnly onclick={() => resume?.(download.id)}>
-							<Play weight="bold" />
+							<PlayIcon weight="bold" />
 						</Button>
 					{/if}
 
 					{#if download.status === DownloadStatus.DOWNLOADING}
 						<Button size="3" variant="soft" iconOnly onclick={() => pause?.(download.id)}>
-							<Pause weight="bold" />
+							<PauseIcon weight="bold" />
 						</Button>
 					{/if}
 
 					{#if [DownloadStatus.DOWNLOADING, DownloadStatus.PAUSED].includes(download.status)}
 						<Button size="3" variant="soft" iconOnly onclick={() => cancel?.(download.id)}>
-							<X weight="bold" />
+							<XIcon weight="bold" />
 						</Button>
 					{/if}
 				</Flexbox>

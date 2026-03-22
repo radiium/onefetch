@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PageLayout from '$lib/components/PageLayout.svelte';
 	import { createSettingsState } from '$lib/state/settings-state.svelte';
-	import Check from 'phosphor-svelte/lib/Check';
+	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 	import { onMount } from 'svelte';
 	import { Button, Flexbox, Input, Panel } from 'svxui';
 
@@ -43,7 +43,7 @@
 				disabled={settingsState.loading || settingsState.disabled}
 				onclick={settingsState.update}
 			>
-				<Check weight="bold" />
+				<CheckIcon weight="bold" />
 				Save
 			</Button>
 		</Flexbox>

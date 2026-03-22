@@ -12,7 +12,7 @@
 	import { formatDate } from '$lib/utils/format-date';
 	import { isBrowser } from '$lib/utils/is-browser';
 	import { typeIcons } from '$lib/utils/type-icons';
-	import ArrowsClockwise from 'phosphor-svelte/lib/ArrowsClockwise';
+	import ArrowsClockwiseIcon from 'phosphor-svelte/lib/ArrowsClockwiseIcon';
 	import { onMount } from 'svelte';
 	import { Button, Flexbox, Panel, Text } from 'svxui';
 
@@ -69,7 +69,7 @@
 			<div class="flex-auto"></div>
 
 			<Button disabled={historyState.loading} onclick={historyState.get}>
-				<ArrowsClockwise weight="bold" />
+				<ArrowsClockwiseIcon weight="bold" />
 				Refresh
 			</Button>
 		</Flexbox>
