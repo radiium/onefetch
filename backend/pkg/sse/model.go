@@ -3,14 +3,14 @@ package sse
 import (
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // OnStatusEventHandler Handles channel status events (connect, disconnect)
-type OnStatusEventHandler func(ctx *fiber.Ctx, name string)
+type OnStatusEventHandler func(ctx fiber.Ctx, name string)
 
 // OnEventHandler Handles specific events
-type OnEventHandler func(ctx *fiber.Ctx, name string, sseEvent *Event)
+type OnEventHandler func(ctx fiber.Ctx, name string, sseEvent *Event)
 
 // ManagerConfig Configuration options for Manager
 type ManagerConfig struct {

@@ -8,19 +8,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // DownloadHandler handles HTTP requests for download operations.
 type DownloadHandler interface {
-	GetInfos(c *fiber.Ctx) error
-	ListDownloads(c *fiber.Ctx) error
-	CreateDownload(c *fiber.Ctx) error
-	PauseDownload(c *fiber.Ctx) error
-	ResumeDownload(c *fiber.Ctx) error
-	CancelDownload(c *fiber.Ctx) error
-	ArchiveDownload(c *fiber.Ctx) error
-	DeleteDownload(c *fiber.Ctx) error
+	GetInfos(c fiber.Ctx) error
+	ListDownloads(c fiber.Ctx) error
+	CreateDownload(c fiber.Ctx) error
+	PauseDownload(c fiber.Ctx) error
+	ResumeDownload(c fiber.Ctx) error
+	CancelDownload(c fiber.Ctx) error
+	ArchiveDownload(c fiber.Ctx) error
+	DeleteDownload(c fiber.Ctx) error
 }
 
 type downloadHandler struct {
@@ -28,7 +28,7 @@ type downloadHandler struct {
 }
 
 // GetInfos get file info from 1fichier api
-func (h *downloadHandler) GetInfos(c *fiber.Ctx) error {
+func (h *downloadHandler) GetInfos(c fiber.Ctx) error {
 	url, err := utils.ValidateNotEmpty("url", c.Query("url"))
 	if err != nil {
 		return errors.HandleError(c, err)
@@ -48,11 +48,11 @@ func NewDownloadHandler(service service.DownloadService) DownloadHandler {
 }
 
 // ListDownloads get paginated downloads with filters
-func (h *downloadHandler) ListDownloads(c *fiber.Ctx) error {
+func (h *downloadHandler) ListDownloads(c fiber.Ctx) error {
 	status := c.Query("status", "")
 	downloadType := c.Query("type", "")
-	page := c.QueryInt("page", 1)
-	limit := c.QueryInt("limit", 20)
+	page := fiber.Query[int](c, "page", 1)
+	limit := fiber.Query[int](c, "limit", 20)
 
 	if page < 1 {
 		page = 1
@@ -104,10 +104,10 @@ func (h *downloadHandler) ListDownloads(c *fiber.Ctx) error {
 }
 
 // CreateDownload create and start download
-func (h *downloadHandler) CreateDownload(c *fiber.Ctx) error {
+func (h *downloadHandler) CreateDownload(c fiber.Ctx) error {
 	// Validate request body
 	var req model.CreateDownloadRequest
-	if err := c.BodyParser(&req); err != nil {
+	if err := c.Bind().Body(&req); err != nil {
 		return errors.HandleBodyParserError(c, err)
 	}
 	// Validate URL
@@ -140,7 +140,7 @@ func (h *downloadHandler) CreateDownload(c *fiber.Ctx) error {
 }
 
 // PauseDownload pause a download
-func (h *downloadHandler) PauseDownload(c *fiber.Ctx) error {
+func (h *downloadHandler) PauseDownload(c fiber.Ctx) error {
 	// Validate id param
 	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
 	if err != nil {
@@ -155,7 +155,7 @@ func (h *downloadHandler) PauseDownload(c *fiber.Ctx) error {
 }
 
 // ResumeDownload resume a download
-func (h *downloadHandler) ResumeDownload(c *fiber.Ctx) error {
+func (h *downloadHandler) ResumeDownload(c fiber.Ctx) error {
 	// Validate id param
 	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
 	if err != nil {
@@ -170,7 +170,7 @@ func (h *downloadHandler) ResumeDownload(c *fiber.Ctx) error {
 }
 
 // CancelDownload cancel a download
-func (h *downloadHandler) CancelDownload(c *fiber.Ctx) error {
+func (h *downloadHandler) CancelDownload(c fiber.Ctx) error {
 	// Validate id param
 	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
 	if err != nil {
@@ -185,7 +185,7 @@ func (h *downloadHandler) CancelDownload(c *fiber.Ctx) error {
 }
 
 // ArchiveDownload archive a download
-func (h *downloadHandler) ArchiveDownload(c *fiber.Ctx) error {
+func (h *downloadHandler) ArchiveDownload(c fiber.Ctx) error {
 	// Validate id param
 	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
 	if err != nil {
@@ -200,7 +200,7 @@ func (h *downloadHandler) ArchiveDownload(c *fiber.Ctx) error {
 }
 
 // DeleteDownload delete a download
-func (h *downloadHandler) DeleteDownload(c *fiber.Ctx) error {
+func (h *downloadHandler) DeleteDownload(c fiber.Ctx) error {
 	// Validate id param
 	id, err := utils.ValidateNotEmpty("id", c.Params("id"))
 	if err != nil {

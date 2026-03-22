@@ -6,14 +6,14 @@ import (
 	"dlbackend/internal/service"
 	"dlbackend/internal/utils"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // FilesHandler handles HTTP requests for filesystem operations.
 type FilesHandler interface {
-	Get(c *fiber.Ctx) error
-	Post(c *fiber.Ctx) error
-	Delete(c *fiber.Ctx) error
+	Get(c fiber.Ctx) error
+	Post(c fiber.Ctx) error
+	Delete(c fiber.Ctx) error
 }
 
 type filesHandler struct {
@@ -26,7 +26,7 @@ func NewFilesHandler(service service.FilesService) FilesHandler {
 }
 
 // Get get filesystem tree representation of download directory
-func (h *filesHandler) Get(c *fiber.Ctx) error {
+func (h *filesHandler) Get(c fiber.Ctx) error {
 	tree, err := h.service.GetDir()
 	if err != nil {
 		return errors.HandleError(c, err)
@@ -36,10 +36,10 @@ func (h *filesHandler) Get(c *fiber.Ctx) error {
 }
 
 // Post create new folder in filesystem tree of download directory
-func (h *filesHandler) Post(c *fiber.Ctx) error {
+func (h *filesHandler) Post(c fiber.Ctx) error {
 	// Validate request body
 	var body model.CreateDirRequest
-	if err := c.BodyParser(&body); err != nil {
+	if err := c.Bind().Body(&body); err != nil {
 		return errors.HandleBodyParserError(c, err)
 	}
 	// Validate path
@@ -62,7 +62,7 @@ func (h *filesHandler) Post(c *fiber.Ctx) error {
 }
 
 // Delete delete file or folder in filesystem tree of download directory
-func (h *filesHandler) Delete(c *fiber.Ctx) error {
+func (h *filesHandler) Delete(c fiber.Ctx) error {
 	path, err := utils.ValidatePath(c.Query("path"))
 	if err != nil {
 		return errors.HandleError(c, errors.BadRequest(err.Error()))

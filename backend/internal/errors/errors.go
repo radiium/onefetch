@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/log"
 )
 
 type AppError struct {
@@ -47,7 +47,7 @@ func Internal(msg string) *AppError {
 	return &AppError{Code: fiber.StatusInternalServerError, Message: msg}
 }
 
-func HandleError(c *fiber.Ctx, err error) error {
+func HandleError(c fiber.Ctx, err error) error {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
 		return c.Status(appErr.Code).JSON(fiber.Map{"error": appErr.Message})
@@ -60,7 +60,7 @@ func HandleError(c *fiber.Ctx, err error) error {
 	})
 }
 
-func HandleBodyParserError(c *fiber.Ctx, err error) error {
+func HandleBodyParserError(c fiber.Ctx, err error) error {
 	return HandleError(c, BadRequest(fmt.Sprintf("invalid request body: %v", err.Error())))
 
 }

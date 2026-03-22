@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -125,12 +125,12 @@ func (m *MockSSEManager) Print() {
 	m.Called()
 }
 
-func (m *MockSSEManager) Handler(c *fiber.Ctx) error {
+func (m *MockSSEManager) Handler(c fiber.Ctx) error {
 	args := m.Called(c)
 	return args.Error(0)
 }
 
-func (m *MockSSEManager) FireHandlers(c *fiber.Ctx, event string) {
+func (m *MockSSEManager) FireHandlers(c fiber.Ctx, event string) {
 	m.Called(c, event)
 }
 

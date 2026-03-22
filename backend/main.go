@@ -15,12 +15,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/helmet"
-	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/log"
+	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/helmet"
+	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
 func main() {
@@ -28,9 +28,7 @@ func main() {
 	config.Load()
 
 	// Initialize Fiber app
-	app := fiber.New(fiber.Config{
-		AppName: "DLBackend",
-	})
+	app := fiber.New(fiber.Config{AppName: "DLBackend"})
 	app.Use(logger.New())
 	app.Use(recover.New())
 	app.Use(cors.New())

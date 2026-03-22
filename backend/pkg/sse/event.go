@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // Represents an SSE event
@@ -33,7 +33,7 @@ func (e *Event) Flush(w *bufio.Writer) error {
 }
 
 // Executes the handlers registered for this event
-func (e *Event) FireEventHandlers(ctx *fiber.Ctx) {
+func (e *Event) FireEventHandlers(ctx fiber.Ctx) {
 	channel := e.OnChannel
 	if handlers, ok := channel.EventHandlers[e.Event]; ok {
 		for _, handler := range handlers {

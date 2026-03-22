@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v3/log"
 )
 
 type FilesService interface {
@@ -86,7 +86,7 @@ func (fs *filesService) DeleteDir(path string) (*model.FSNode, error) {
 }
 
 // DownloadFileInline serves the file inline (opens in browser when possible).
-// func DownloadFileInline(c *fiber.Ctx, filePath string) error {
+// func DownloadFileInline(c fiber.Ctx, filePath string) error {
 // 	// Check if the file exists
 // 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 // 					return nil, errors.NotFound(fmt.Sprintf("directory not found: %s", path))

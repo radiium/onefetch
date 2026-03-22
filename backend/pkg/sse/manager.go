@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/log"
 	"github.com/valyala/fasthttp"
 )
 
@@ -18,8 +18,8 @@ type Manager interface {
 	SendEvent(event string, data interface{}) error
 	Close() error
 	Print()
-	Handler(c *fiber.Ctx) error
-	FireHandlers(c *fiber.Ctx, event string)
+	Handler(c fiber.Ctx) error
+	FireHandlers(c fiber.Ctx, event string)
 	OnConnect(handlers ...OnStatusEventHandler) Manager
 	OnDisconnect(handlers ...OnStatusEventHandler) Manager
 	OnEvent(eventName string, handlers ...OnEventHandler) Manager
@@ -234,7 +234,7 @@ func (m *manager) Print() {
 }
 
 // Handler manages an incoming SSE connection for the lifetime of the request.
-func (m *manager) Handler(c *fiber.Ctx) error {
+func (m *manager) Handler(c fiber.Ctx) error {
 	// Reject new connections if the manager is already closed
 	if m.IsClosed() {
 		return c.Status(fiber.StatusServiceUnavailable).SendString("SSE channel is closed")
@@ -255,7 +255,7 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 	}
 	m.addClient(client)
 
-	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
+	c.Status(fiber.StatusOK).RequestCtx().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
 		// Fire OnConnect Event Handlers
 		m.FireHandlers(c, "connect")
 
@@ -326,7 +326,7 @@ func (m *manager) Handler(c *fiber.Ctx) error {
 }
 
 // Executes handlers synchronously with the valid context
-func (m *manager) FireHandlers(c *fiber.Ctx, event string) {
+func (m *manager) FireHandlers(c fiber.Ctx, event string) {
 	if handlers, ok := m.StatusHandlers[event]; ok {
 		for _, handler := range handlers {
 			handler(c, m.Name)
@@ -360,3 +360,5 @@ func (m *manager) OnEvent(eventName string, handlers ...OnEventHandler) Manager 
 	m.EventHandlers[eventName] = append(m.EventHandlers[eventName], handlers...)
 	return m
 }
+
+// fiber:context-methods migrated

@@ -5,13 +5,13 @@ import (
 	"dlbackend/internal/model"
 	"dlbackend/internal/service"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 // FilesHandler handles HTTP requests for settings operations.
 type SettingsHandler interface {
-	GetSettings(c *fiber.Ctx) error
-	UpdateSettings(c *fiber.Ctx) error
+	GetSettings(c fiber.Ctx) error
+	UpdateSettings(c fiber.Ctx) error
 }
 
 type settingsHandler struct {
@@ -24,7 +24,7 @@ func NewSettingsHandler(service service.SettingsService) SettingsHandler {
 }
 
 // GetSettings get current Settings
-func (h *settingsHandler) GetSettings(c *fiber.Ctx) error {
+func (h *settingsHandler) GetSettings(c fiber.Ctx) error {
 	settings, err := h.service.GetSettings()
 	if err != nil {
 		return errors.HandleError(c, err)
@@ -34,10 +34,10 @@ func (h *settingsHandler) GetSettings(c *fiber.Ctx) error {
 }
 
 // UpdateSettings update Settings
-func (h *settingsHandler) UpdateSettings(c *fiber.Ctx) error {
+func (h *settingsHandler) UpdateSettings(c fiber.Ctx) error {
 	// Validate request body
 	var settings model.UpdateSettingsRequest
-	if err := c.BodyParser(&settings); err != nil {
+	if err := c.Bind().Body(&settings); err != nil {
 		return errors.HandleBodyParserError(c, err)
 	}
 
