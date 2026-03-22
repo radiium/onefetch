@@ -23,8 +23,9 @@ WORKDIR /app
 COPY backend/go.* ./
 RUN go mod download
 COPY backend/ ./
+ARG APP_VERSION=dev
 RUN CGO_ENABLED=1 GOOS=linux go build \
-    # -ldflags="-w -s" \
+    -ldflags="-w -s -X main.Version=${APP_VERSION}" \
     -trimpath \
     -o onefetch-app .
 

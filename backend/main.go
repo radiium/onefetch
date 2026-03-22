@@ -23,6 +23,8 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/recover"
 )
 
+var Version = "dev"
+
 func main() {
 	// Load configuration
 	config.Load()
@@ -69,6 +71,7 @@ func main() {
 
 	// Start server in goroutine
 	go func() {
+		log.Infof("Version: %s", Version)
 		log.Infof("🚀 Starting server on port %s", config.Cfg.Port)
 		if err := app.Listen(":" + config.Cfg.Port); err != nil {
 			log.Fatalf("Server error: %v", err)
