@@ -22,10 +22,10 @@ type OneFichierClient interface {
 // Client Struct
 // ===============================
 type oneFichierClient struct {
-	baseURL        string
-	apiKey         string
-	apiClient      *http.Client // with timeout for short API calls
-	httpClient     *http.Client // no timeout for file streaming
+	baseURL    string
+	apiKey     string
+	apiClient  *http.Client // with timeout for short API calls
+	httpClient *http.Client // no timeout for file streaming
 }
 
 // ===============================
@@ -44,6 +44,8 @@ type OneFichierInfoResponse struct {
 	Pass        int     `json:"pass"`
 	Path        string  `json:"path"`
 	FolderID    string  `json:"folder_id"`
+	Status      *string `json:"status,omitempty"`
+	Message     *string `json:"message,omitempty"`
 }
 
 // OneFichierTokenResponse response of /download/get_token.cgi
@@ -101,6 +103,10 @@ func (c *oneFichierClient) GetFileInfo(fileURL string) (*OneFichierInfoResponse,
 	var result OneFichierInfoResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode == 403 || result.Status != nil && *result.Status == "KO" {
+		return nil, fmt.Errorf("403 failed to get fileinfo: %v", result.Message)
 	}
 
 	return &result, nil
