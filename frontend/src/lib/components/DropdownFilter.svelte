@@ -5,7 +5,7 @@
 		Badge,
 		Button,
 		Checkbox,
-		Flexbox,
+		Flex,
 		Floating,
 		Separator,
 		type ButtonProps,
@@ -59,7 +59,7 @@
 >
 	{#snippet trigger()}
 		<Button size="2" variant="outline" {...buttonProps} onclick={() => (isOpen = !isOpen)}>
-			<Flexbox gap="2" align="center" class="pl-1">
+			<Flex gap="2" align="center" class="pl-1">
 				<FunnelIcon size="1rem" weight={value?.length ? 'fill' : 'regular'} />
 
 				{name}
@@ -69,11 +69,11 @@
 				{/if}
 
 				<CaretDownIcon size="1.2rem" />
-			</Flexbox>
+			</Flex>
 		</Button>
 	{/snippet}
 	{#snippet content()}
-		<Flexbox direction="column" align="center">
+		<Flex direction="column" align="center">
 			{#each options as opt, i (i)}
 				<Button
 					size="2"
@@ -84,10 +84,10 @@
 					onclick={() => select(opt)}
 					style="--button-background-hover: var(--accent-5);"
 				>
-					<Flexbox gap="2" align="center">
+					<Flex gap="2" align="center">
 						<Checkbox size="3" tabindex={-1} checked={value?.includes(opt)} />
 						{opt}
-					</Flexbox>
+					</Flex>
 				</Button>
 			{/each}
 
@@ -97,6 +97,6 @@
 					Reset filter
 				</Button>
 			{/if}
-		</Flexbox>
+		</Flex>
 	{/snippet}
 </Floating>

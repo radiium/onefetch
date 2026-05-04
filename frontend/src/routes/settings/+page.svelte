@@ -3,17 +3,17 @@
 	import { createSettingsState } from '$lib/state/settings-state.svelte';
 	import CheckIcon from 'phosphor-svelte/lib/CheckIcon';
 	import { onMount } from 'svelte';
-	import { Button, Flexbox, Input, Panel } from 'svxui';
+	import { Button, Flex, Input, Panel } from 'svxui';
 
 	const settingsState = createSettingsState();
 	onMount(settingsState.get);
 </script>
 
 <PageLayout title="Settings" error={settingsState.error}>
-	<Flexbox direction="column" gap="6" as="form">
-		<Panel variant="soft" size="0">
-			<Flexbox direction="column" gap="4" class="p-5">
-				<Flexbox gap="4" align="center" as="label">
+	<Flex direction="column" gap="6" as="form">
+		<Panel variant="soft" p="0">
+			<Flex direction="column" gap="4" class="p-5">
+				<Flex gap="4" align="center" as="label">
 					<span>1fichier.com API key</span>
 					<Input
 						class="flex-auto"
@@ -22,9 +22,9 @@
 						bind:value={settingsState.apiKey1fichier}
 						disabled={settingsState.loading}
 					/>
-				</Flexbox>
+				</Flex>
 
-				<Flexbox gap="4" align="center" as="label">
+				<Flex gap="4" align="center" as="label">
 					<span>Jellyfin API key</span>
 					<Input
 						class="flex-auto"
@@ -33,11 +33,11 @@
 						bind:value={settingsState.apiKeyJellyfin}
 						disabled={settingsState.loading}
 					/>
-				</Flexbox>
-			</Flexbox>
+				</Flex>
+			</Flex>
 		</Panel>
 
-		<Flexbox>
+		<Flex>
 			<Button
 				size="3"
 				disabled={settingsState.loading || settingsState.disabled}
@@ -46,8 +46,8 @@
 				<CheckIcon weight="bold" />
 				Save
 			</Button>
-		</Flexbox>
-	</Flexbox>
+		</Flex>
+	</Flex>
 </PageLayout>
 
 <style>

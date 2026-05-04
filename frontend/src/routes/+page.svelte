@@ -10,7 +10,7 @@
 	import FolderIcon from 'phosphor-svelte/lib/FolderIcon';
 	import PlayIcon from 'phosphor-svelte/lib/PlayIcon';
 
-	import { Button, Flexbox, Input, Panel, Select, SelectOption, Separator, Text } from 'svxui';
+	import { Button, Flex, Input, Panel, Select, SelectOption, Separator, Text } from 'svxui';
 
 	const id = $props.id();
 	const newState = createNewState();
@@ -18,9 +18,9 @@
 </script>
 
 <PageLayout title="New task" error={newState.error}>
-	<Flexbox direction="column" gap="6">
+	<Flex direction="column" gap="6">
 		<!-- Url -->
-		<Flexbox gap="4" align="center" as="label">
+		<Flex gap="4" align="center" as="label">
 			<Input
 				id="url-{id}"
 				name="url"
@@ -35,23 +35,23 @@
 					}
 				}}
 			/>
-		</Flexbox>
+		</Flex>
 
 		{#if newState.fileinfo?.url}
-			<Panel variant="soft" size="0">
+			<Panel variant="soft" p="0">
 				<!-- Infos -->
-				<Flexbox gap="4" align="stretch" class="p-5">
-					<Panel size="2" style="width: 120px;" class="shrink-0 ">
-						<Flexbox gap="3" align="center" justify="center" class="h-100">
+				<Flex gap="4" align="stretch" class="p-5">
+					<Panel p="2" style="width: 120px;" class="shrink-0 ">
+						<Flex gap="3" align="center" justify="center" class="h-100">
 							<DatabaseIcon class="shrink-0" />
 							<Text muted weight="medium" wrap="nowrap" align="center" class="flex-auto">
 								{formatBytes(newState.fileinfo.size)}
 							</Text>
-						</Flexbox>
+						</Flex>
 					</Panel>
 
-					<Panel size="2" class="flex-auto min-w-0">
-						<Flexbox gap="3" align="center">
+					<Panel p="2" class="flex-auto min-w-0">
+						<Flex gap="3" align="center">
 							<FileArrowDownIcon class="shrink-0" />
 							<Text
 								muted
@@ -60,15 +60,15 @@
 								class="min-w-0"
 								title="path where the file will be saved">{newState.pathPreview}</Text
 							>
-						</Flexbox>
+						</Flex>
 					</Panel>
-				</Flexbox>
+				</Flex>
 
 				<Separator size="4" />
 
-				<Flexbox direction="column" gap="4" as="form" class="p-5">
+				<Flex direction="column" gap="4" as="form" class="p-5">
 					<!-- Type -->
-					<Flexbox gap="4" align="center">
+					<Flex gap="4" align="center">
 						<span>Type</span>
 
 						<Select
@@ -83,13 +83,13 @@
 								<SelectOption {value}>{value}</SelectOption>
 							{/each}
 						</Select>
-					</Flexbox>
+					</Flex>
 
 					<!-- File dir -->
-					<Flexbox gap="4" align="center" as="label">
+					<Flex gap="4" align="center" as="label">
 						<span> Save to </span>
 
-						<Flexbox gap="2" class="flex-auto">
+						<Flex gap="2" class="flex-auto">
 							<Input
 								id="fileDir-{id}"
 								name="fileDir"
@@ -108,11 +108,11 @@
 									<FolderIcon />
 								</SelectDirectory>
 							{/if}
-						</Flexbox>
-					</Flexbox>
+						</Flex>
+					</Flex>
 
 					<!-- File name -->
-					<Flexbox gap="4" align="center" as="label">
+					<Flex gap="4" align="center" as="label">
 						<span> Rename </span>
 						<Input
 							id="fileName-{id}"
@@ -122,19 +122,19 @@
 							bind:value={newState.fileName}
 							disabled={newState.loading}
 						/>
-					</Flexbox>
-				</Flexbox>
+					</Flex>
+				</Flex>
 			</Panel>
 
 			<!-- Submit -->
-			<Flexbox>
+			<Flex>
 				<Button size="3" onclick={newState.create}>
 					<PlayIcon weight="fill" />
 					Start download
 				</Button>
-			</Flexbox>
+			</Flex>
 		{/if}
-	</Flexbox>
+	</Flex>
 </PageLayout>
 
 <style>

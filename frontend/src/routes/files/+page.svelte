@@ -4,7 +4,7 @@
 	import { createFilesState } from '$lib/state/files-state.svelte';
 	import type { FSNode } from '$lib/types/types';
 	import { onMount } from 'svelte';
-	import { Button, clickoutside, Dialog, Flexbox, Input } from 'svxui';
+	import { Button, clickoutside, Dialog, Flex, Input, Panel } from 'svxui';
 
 	const fileState = createFilesState();
 	onMount(fileState.get);
@@ -68,16 +68,18 @@
 	closeOnBackdropClick
 	closeOnEscape
 >
-	<Flexbox direction="column" gap="3">
-		<h2 class="my-0">Add new folder</h2>
-		<div>
-			<Input placeholder="new folder" bind:value={newDirname} />
-		</div>
-		<Flexbox gap="3" justify="end">
-			<Button variant="outline" onclick={newCancel}>Cancel</Button>
-			<Button onclick={newConfirm}>Confirm</Button>
-		</Flexbox>
-	</Flexbox>
+	<Panel variant="soft" outline>
+		<Flex direction="column" gap="3">
+			<h2 class="my-0">Add new folder</h2>
+			<div>
+				<Input placeholder="new folder" bind:value={newDirname} />
+			</div>
+			<Flex gap="3" justify="end">
+				<Button variant="outline" onclick={newCancel}>Cancel</Button>
+				<Button onclick={newConfirm}>Confirm</Button>
+			</Flex>
+		</Flex>
+	</Panel>
 </Dialog>
 
 <Dialog
@@ -86,14 +88,16 @@
 	closeOnBackdropClick
 	closeOnEscape
 >
-	<Flexbox direction="column" gap="3">
-		<h2 class="my-0">Delete</h2>
-		<div>
-			Do you want delete {deleteCurrent?.name} item ?
-		</div>
-		<Flexbox gap="3" justify="end">
-			<Button variant="outline" onclick={deleteCancel}>Cancel</Button>
-			<Button onclick={deleteConfirm}>Confirm</Button>
-		</Flexbox>
-	</Flexbox>
+	<Panel variant="soft" outline>
+		<Flex direction="column" gap="3">
+			<h2 class="my-0">Delete</h2>
+			<div>
+				Do you want delete {deleteCurrent?.name} item ?
+			</div>
+			<Flex gap="3" justify="end">
+				<Button variant="outline" onclick={deleteCancel}>Cancel</Button>
+				<Button onclick={deleteConfirm}>Confirm</Button>
+			</Flex>
+		</Flex>
+	</Panel>
 </Dialog>

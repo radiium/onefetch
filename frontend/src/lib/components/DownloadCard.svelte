@@ -9,7 +9,7 @@
 	import PauseIcon from 'phosphor-svelte/lib/PauseIcon';
 	import PlayIcon from 'phosphor-svelte/lib/PlayIcon';
 	import XIcon from 'phosphor-svelte/lib/XIcon';
-	import { Badge, Button, Flexbox, Panel, Text } from 'svxui';
+	import { Badge, Button, Flex, Panel, Text } from 'svxui';
 	import ProgressBar from './ProgressBar.svelte';
 
 	type Props = {
@@ -27,9 +27,9 @@
 </script>
 
 <Panel variant="soft">
-	<Flexbox gap="3" direction="column" class="flex-auto">
+	<Flex gap="3" direction="column" class="flex-auto">
 		<!-- Row 1 => Icon + FileName + Status -->
-		<Flexbox gap="3" align="center" class="w-100">
+		<Flex gap="3" align="center" class="w-100">
 			<Icon size="1.4rem" class="shrink-0" />
 
 			<Text truncate>{fileName}</Text>
@@ -38,15 +38,15 @@
 			<Badge variant="soft" size="3" {color}>
 				{download.status}
 			</Badge>
-		</Flexbox>
+		</Flex>
 
 		<!-- Row 2 => progressbar -->
-		<Flexbox gap="3" class="w-100">
+		<Flex gap="3" class="w-100">
 			<ProgressBar value={download.progress} {color} />
-		</Flexbox>
+		</Flex>
 
 		<!-- Row 3 => Stats + Actions -->
-		<Flexbox gap="1" justify="between" class="w-100">
+		<Flex gap="1" justify="between" class="w-100">
 			<table class="stats">
 				<tbody>
 					<tr>
@@ -65,11 +65,11 @@
 							<Text truncate wrap="nowrap">Speed</Text>
 						</td>
 						<td>
-							<Flexbox gap="1">
+							<Flex gap="1">
 								<Text size="2" truncate wrap="nowrap">
 									{formatBytes(download.speed)}/s
 								</Text>
-							</Flexbox>
+							</Flex>
 						</td>
 					</tr>
 
@@ -93,20 +93,20 @@
 							<Text truncate wrap="nowrap">Downloaded</Text>
 						</td>
 						<td>
-							<Flexbox gap="1">
+							<Flex gap="1">
 								<Text size="2" truncate wrap="nowrap">
 									{formatBytes(Number(download.downloadedBytes))}
 								</Text>
 								<Text size="2" muted truncate wrap="nowrap">
 									/&nbsp;{formatBytes(Number(download.fileSize))}
 								</Text>
-							</Flexbox>
+							</Flex>
 						</td>
 					</tr>
 				</tbody>
 			</table>
 
-			<Flexbox gap="2" align="end">
+			<Flex gap="2" align="end">
 				{#if download.status === DownloadStatus.PAUSED}
 					<Button size="3" variant="soft" iconOnly onclick={() => resume?.(download.id)}>
 						<PlayIcon weight="bold" />
@@ -124,7 +124,7 @@
 						<XIcon weight="bold" />
 					</Button>
 				{/if}
-			</Flexbox>
-		</Flexbox>
-	</Flexbox>
+			</Flex>
+		</Flex>
+	</Flex>
 </Panel>

@@ -7,7 +7,7 @@
 	import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
 	import TrashIcon from 'phosphor-svelte/lib/TrashIcon';
 	import { slide } from 'svelte/transition';
-	import { Accordion, Button, Flexbox, Text } from 'svxui';
+	import { Accordion, Button, Flex, Text } from 'svxui';
 	import ContextMenu from './ContextMenu.svelte';
 	import FSNodeItem from './FSNodeItem.svelte';
 
@@ -41,7 +41,7 @@
 </script>
 
 <ContextMenu bind:this={contextMenu}>
-	<Flexbox direction="column">
+	<Flex direction="column">
 		{#if fileNode.isDir}
 			<Button
 				size="2"
@@ -69,17 +69,17 @@
 			<TrashIcon />
 			Delete
 		</Button>
-	</Flexbox>
+	</Flex>
 </ContextMenu>
 
 {#if fileNode}
 	{#if fileNode.isDir}
 		<Accordion orientation="vertical" bind:value>
 			{#snippet children(accordion)}
-				<Flexbox direction="column" class="w-100" {...accordion.rootAttrs}>
+				<Flex direction="column" class="w-100" {...accordion.rootAttrs}>
 					{@const item = accordion.getItem(fileNode.path)}
 					<!-- Item -->
-					<Flexbox direction="column" class="w-100" {...item.itemAttrs}>
+					<Flex direction="column" class="w-100" {...item.itemAttrs}>
 						<!-- Heading -->
 						<Button
 							variant="clear"
@@ -89,7 +89,7 @@
 							{active}
 							{oncontextmenu}
 						>
-							<Flexbox
+							<Flex
 								gap="1"
 								align="center"
 								justify="start"
@@ -97,13 +97,13 @@
 								style="cursor: pointer; "
 								{...item.headingAttrs}
 							>
-								<Flexbox align="center" {...item.triggerAttrs}>
+								<Flex align="center" {...item.triggerAttrs}>
 									{#if item.expanded}
 										<CaretDownIcon size="1.2rem" />
 									{:else}
 										<CaretRightIcon size="1.2rem" />
 									{/if}
-								</Flexbox>
+								</Flex>
 
 								<FolderIcon
 									size="1.2rem"
@@ -126,7 +126,7 @@
 								>
 									{fileNode?.name}
 								</Text>
-							</Flexbox>
+							</Flex>
 						</Button>
 
 						<!-- Content -->
@@ -145,8 +145,8 @@
 								{/each}
 							</div>
 						{/if}
-					</Flexbox>
-				</Flexbox>
+					</Flex>
+				</Flex>
 			{/snippet}
 		</Accordion>
 	{:else}
@@ -159,10 +159,10 @@
 			onclick={() => onSelect?.(fileNode)}
 			{oncontextmenu}
 		>
-			<Flexbox class="w-100" justify="between" align="center">
+			<Flex class="w-100" justify="between" align="center">
 				<Text truncate class="flex-auto">{fileNode?.name}</Text>
 				<Text truncate muted>{formatBytes(fileNode?.size)}</Text>
-			</Flexbox>
+			</Flex>
 		</Button>
 	{/if}
 {/if}

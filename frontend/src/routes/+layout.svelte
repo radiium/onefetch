@@ -8,7 +8,7 @@
 	import IconContext from 'phosphor-svelte/lib/IconContext';
 	import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
 	import QueueIcon from 'phosphor-svelte/lib/QueueIcon';
-	import { Button, Flexbox, Separator, Text, ThemeRootProvider } from 'svxui';
+	import { Button, Flex, Separator, Text, ThemeProvider } from 'svxui';
 	import 'svxui/styles/normalize.css';
 	import 'svxui/styles/tokens.css';
 	import 'svxui/styles/utilities.css';
@@ -17,16 +17,16 @@
 </script>
 
 <IconContext values={{ size: '1.4rem' }}>
-	<ThemeRootProvider defaultRadius="large">
+	<ThemeProvider radius="large">
 		<div class="container">
 			<aside>
-				<Flexbox as="header" gap="1" align="center" justify="start" class="mb-5">
+				<Flex as="header" gap="1" align="center" justify="start" class="mb-5">
 					<img src={asset('/logo.png')} alt="logo" />
-					<Flexbox>
+					<Flex>
 						<Text weight="bold" size="5" transform="uppercase" as="div" color="orange">one</Text>
 						<Text weight="bold" size="5" transform="uppercase" as="i">fetch</Text>
-					</Flexbox>
-				</Flexbox>
+					</Flex>
+				</Flex>
 
 				<Button
 					fullWidth
@@ -71,7 +71,7 @@
 				{@render children?.()}
 			</main>
 		</div>
-	</ThemeRootProvider>
+	</ThemeProvider>
 </IconContext>
 
 <style>

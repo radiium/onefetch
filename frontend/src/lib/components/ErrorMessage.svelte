@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { HttpError } from '$lib/api/http-client';
 	import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
-	import { Flexbox, Panel, Text } from 'svxui';
+	import { Flex, Panel, Text } from 'svxui';
 
 	type Props = {
 		error?: Error;
@@ -15,11 +15,11 @@
 	let extra = $derived(error instanceof HttpError ? (error?.data as any)?.error : '');
 </script>
 
-<Panel variant="soft" color="red" size="6" style="padding: var(--space-4) ">
-	<Flexbox gap="3">
+<Panel variant="soft" color="red" p="6" style="padding: var(--space-4) ">
+	<Flex gap="3">
 		<WarningCircleIcon size="24px" weight="fill" color="var(--tomato-9)" class="shrink-0" />
 
-		<Flexbox direction="column" gap="1">
+		<Flex direction="column" gap="1">
 			<Text color="red" weight="bold">{name}</Text>
 
 			{#if cause}
@@ -33,6 +33,6 @@
 			{#if extra}
 				<Text color="red" size="2">{extra}</Text>
 			{/if}
-		</Flexbox>
-	</Flexbox>
+		</Flex>
+	</Flex>
 </Panel>

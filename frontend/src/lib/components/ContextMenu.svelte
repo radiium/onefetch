@@ -66,7 +66,7 @@
 		data-state={isOpen ? 'open' : 'close'}
 		role="dialog"
 	>
-		<Panel size="2" variant="soft" outline>
+		<Panel p="2" variant="soft" outline>
 			{@render children?.({ close })}
 		</Panel>
 	</div>

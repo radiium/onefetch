@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Pagination } from '$lib/types/types';
-	import { Button, Flexbox } from 'svxui';
+	import { Button, Flex } from 'svxui';
 
 	type Props = {
 		currentPage?: number;
@@ -12,7 +12,7 @@
 
 {#if pagination}
 	{currentPage}
-	<Flexbox gap="3">
+	<Flex gap="3">
 		{#each { length: pagination.totalPages }, i (i)}
 			{@const page = i + 1}
 			<Button
@@ -26,5 +26,5 @@
 				{page}
 			</Button>
 		{/each}
-	</Flexbox>
+	</Flex>
 {/if}

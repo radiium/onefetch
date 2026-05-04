@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { Button, Flexbox, Floating, Text } from 'svxui';
+	import { Button, Flex, Floating, Text } from 'svxui';
 
 	type Props = {
 		options: string[];
@@ -33,7 +33,7 @@
 		</Button>
 	{/snippet}
 	{#snippet content()}
-		<Flexbox direction="column" gap="1" align="center" style="min-width: 250px">
+		<Flex direction="column" gap="1" align="center" style="min-width: 250px">
 			{#each options as opt, i (i)}
 				<Button
 					variant="clear"
@@ -50,6 +50,6 @@
 					</Text>
 				</Button>
 			{/each}
-		</Flexbox>
+		</Flex>
 	{/snippet}
 </Floating>

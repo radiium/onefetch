@@ -3,7 +3,7 @@
 	import { statusColor } from '$lib/utils/status-color';
 	import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
 	import WarningCircleIcon from 'phosphor-svelte/lib/WarningCircleIcon';
-	import { Badge, Flexbox, Floating, Text } from 'svxui';
+	import { Badge, Flex, Floating, Text } from 'svxui';
 
 	type Props = {
 		dl: Download;
@@ -28,10 +28,10 @@
 			</Badge>
 		{/snippet}
 		{#snippet content()}
-			<Flexbox gap="3" style="max-width: 500px;">
+			<Flex gap="3" style="max-width: 500px;">
 				<WarningCircleIcon size="24px" weight="fill" color="var(--tomato-9)" class="shrink-0" />
 				<Text color="red">{dl.errorMessage}</Text>
-			</Flexbox>
+			</Flex>
 		{/snippet}
 	</Floating>
 {:else}

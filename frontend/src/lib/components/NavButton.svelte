@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
-	import { Button, Flexbox } from 'svxui';
+	import { Button, Flex } from 'svxui';
 
 	type Props = {
 		route?: string;
@@ -31,9 +31,9 @@
 		onclick?.();
 	}}
 >
-	<Flexbox align="center" gap="3" class="w-100 py-1">
+	<Flex align="center" gap="3" class="w-100 py-1">
 		{@render children?.()}
-	</Flexbox>
+	</Flex>
 </Button>
 
 <style>

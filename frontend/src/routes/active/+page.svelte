@@ -4,7 +4,7 @@
 	import PageLayout from '$lib/components/PageLayout.svelte';
 	import { createActiveState } from '$lib/state/active-state.svelte';
 	import { onMount } from 'svelte';
-	import { Flexbox } from 'svxui';
+	import { Flex } from 'svxui';
 
 	const activeState = createActiveState();
 	onMount(activeState.start);
@@ -12,7 +12,7 @@
 
 <PageLayout title="Download" error={activeState.error}>
 	{#if activeState.downloads?.length > 0}
-		<Flexbox direction="column" gap="4">
+		<Flex direction="column" gap="4">
 			{#each activeState.downloads as download, i (i)}
 				<DownloadCard
 					{download}
@@ -21,7 +21,7 @@
 					cancel={activeState.cancel}
 				/>
 			{/each}
-		</Flexbox>
+		</Flex>
 	{:else}
 		<EmptyState text="No downloads in progress..." />
 	{/if}
