@@ -9,7 +9,9 @@
 	import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
 	import QueueIcon from 'phosphor-svelte/lib/QueueIcon';
 	import { Button, Flex, Separator, Text, ThemeProvider } from 'svxui';
+
 	import 'svxui/styles/normalize.css';
+	import 'svxui/styles/theme.default.css';
 	import 'svxui/styles/tokens.css';
 	import 'svxui/styles/utilities.css';
 
@@ -39,7 +41,7 @@
 					}}
 				>
 					<PlusIcon size="1.2rem" />
-					<span>New task</span>
+					<span>New download</span>
 				</Button>
 
 				<Separator size="4" class="my-4" />
@@ -76,7 +78,7 @@
 
 <style>
 	.container {
-		--aside-width: 260px;
+		--aside-width: 220px;
 
 		width: 100vw;
 		min-height: 100vh;

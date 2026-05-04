@@ -3,93 +3,100 @@
 	import SelectDirectory from '$lib/components/SelectDirectory.svelte';
 	import { createNewState } from '$lib/state/new-state.svelte';
 	import { DownloadType } from '$lib/types/types';
-	import { useClipboard } from '$lib/utils/clipboard.svelte';
 	import { formatBytes } from '$lib/utils/format-bytes';
-	import DatabaseIcon from 'phosphor-svelte/lib/DatabaseIcon';
-	import FileArrowDownIcon from 'phosphor-svelte/lib/FileArrowDownIcon';
+	import { typeIcons } from '$lib/utils/type-icons';
+	import { FileCloudIcon, FilmReelIcon } from 'phosphor-svelte';
 	import FolderIcon from 'phosphor-svelte/lib/FolderIcon';
 	import PlayIcon from 'phosphor-svelte/lib/PlayIcon';
-
-	import { Button, Flex, Input, Panel, Select, SelectOption, Separator, Text } from 'svxui';
+	import { Button, Clipboard, Flex, Grid, Input, Panel, Separator, Text } from 'svxui';
 
 	const id = $props.id();
 	const newState = createNewState();
-	const clipboard = useClipboard();
+	const clipboard = new Clipboard();
 </script>
 
-<PageLayout title="New task" error={newState.error}>
-	<Flex direction="column" gap="6">
-		<!-- Url -->
-		<Flex gap="4" align="center" as="label">
-			<Input
-				id="url-{id}"
-				name="url"
-				size="3"
-				fullWidth
-				placeholder="Type 1fichier.com URL..."
-				bind:value={newState.url}
-				onfocus={async () => {
-					const url = ((await clipboard.read()) ?? '').trim();
-					if (newState.isValid1FichierUrl(url)) {
-						newState.url = url;
-					}
-				}}
-			/>
-		</Flex>
+<PageLayout title="New download" error={newState.error}>
+	<Flex direction="column" gap="4">
+		<!-- Step 1 -->
+		<Panel variant="surface" p="5">
+			<Flex direction="column" gap="4">
+				<!-- Input URL -->
+				<Input
+					id="url-{id}"
+					name="url"
+					size="3"
+					fullWidth
+					placeholder="paste a 1fichier.com link..."
+					bind:value={newState.url}
+					onfocus={async () => {
+						clipboard.read();
+						const url = ((await clipboard.read()) ?? '').trim();
+						if (newState.isValid1FichierUrl(url)) {
+							newState.url = url;
+						}
+					}}
+					style="padding: var(--space-4) var(--space-4); font-size: var(--font-size-6)"
+				/>
 
+				<!-- Download infos -->
+				{#if newState.fileinfo?.url}
+					<Panel variant="soft">
+						<Flex align="center" gap="3">
+							<Panel variant="solid" p="3">
+								<Flex align="center">
+									<FilmReelIcon size="30px" />
+								</Flex>
+							</Panel>
+							<Flex direction="column" gap="1">
+								<Text weight="medium">{newState.fileinfo.filename}</Text>
+								<Flex gap="1" align="center">
+									<Text size="2" muted>{formatBytes(newState.fileinfo.size)} • 1fichier •</Text>
+									<Text size="2" color="green">✓ resolved</Text>
+								</Flex>
+							</Flex>
+						</Flex>
+					</Panel>
+				{/if}
+			</Flex>
+		</Panel>
+
+		<!-- Step 2 -->
 		{#if newState.fileinfo?.url}
-			<Panel variant="soft" p="0">
-				<!-- Infos -->
-				<Flex gap="4" align="stretch" class="p-5">
-					<Panel p="2" style="width: 120px;" class="shrink-0 ">
-						<Flex gap="3" align="center" justify="center" class="h-100">
-							<DatabaseIcon class="shrink-0" />
-							<Text muted weight="medium" wrap="nowrap" align="center" class="flex-auto">
-								{formatBytes(newState.fileinfo.size)}
-							</Text>
-						</Flex>
-					</Panel>
+			<Panel variant="surface" p="5">
+				<Flex gap="4" direction="column" as="form">
+					<!-- type -->
+					<Grid cols="80px 1fr" gap="3" as="label">
+						<Flex justify="start" align="center" as="span">Type</Flex>
 
-					<Panel p="2" class="flex-auto min-w-0">
-						<Flex gap="3" align="center">
-							<FileArrowDownIcon class="shrink-0" />
-							<Text
-								muted
-								weight="medium"
-								wrap="pretty"
-								class="min-w-0"
-								title="path where the file will be saved">{newState.pathPreview}</Text
-							>
-						</Flex>
-					</Panel>
-				</Flex>
-
-				<Separator size="4" />
-
-				<Flex direction="column" gap="4" as="form" class="p-5">
-					<!-- Type -->
-					<Flex gap="4" align="center">
-						<span>Type</span>
-
-						<Select
-							id="type-{id}"
-							name="type"
-							size="3"
-							style="min-width: 150px;"
-							class="flex-auto"
-							bind:value={newState.type}
-						>
+						<Flex gap="3">
 							{#each Object.values(DownloadType) as value, i (i)}
-								<SelectOption {value}>{value}</SelectOption>
+								{@const Icon = typeIcons[value]}
+								{@const isSelected = newState.type === value}
+
+								<Panel as="label" variant={isSelected ? 'soft' : 'surface'} outline p="0">
+									<!-- color={isSelected ? 'orange' : 'neutral'} -->
+									<Flex align="center" gap="3" px="3" height="40px">
+										<Icon size="16px" />
+										<Flex direction="column" gap="1">
+											<input
+												type="radio"
+												name="type"
+												{value}
+												bind:group={newState.type}
+												style="position: fixed; opacity: 0; pointer-events: none;"
+											/>
+											<Text size="4" weight="bold">{value}</Text>
+										</Flex>
+									</Flex>
+								</Panel>
 							{/each}
-						</Select>
-					</Flex>
+						</Flex>
+					</Grid>
 
-					<!-- File dir -->
-					<Flex gap="4" align="center" as="label">
-						<span> Save to </span>
-
-						<Flex gap="2" class="flex-auto">
+					<!-- Sub directory -->
+					<Grid cols="1fr 40px" gap="3">
+						<Grid cols="80px 1fr" gap="3" as="label">
+							<Flex justify="start" align="center" as="span">Save to</Flex>
 							<Input
 								id="fileDir-{id}"
 								name="fileDir"
@@ -98,22 +105,22 @@
 								bind:value={newState.fileDir}
 								disabled={newState.loading}
 							/>
+						</Grid>
 
-							{#if newState.directories.length}
-								<SelectDirectory
-									options={newState.directories}
-									disabled={newState.directories.length === 0}
-									onSelect={(dir) => (newState.fileDir = dir)}
-								>
-									<FolderIcon />
-								</SelectDirectory>
-							{/if}
-						</Flex>
-					</Flex>
+						{#if newState.directories.length}
+							<SelectDirectory
+								options={newState.directories}
+								disabled={newState.directories.length === 0}
+								onSelect={(dir) => (newState.fileDir = dir)}
+							>
+								<FolderIcon />
+							</SelectDirectory>
+						{/if}
+					</Grid>
 
 					<!-- File name -->
-					<Flex gap="4" align="center" as="label">
-						<span> Rename </span>
+					<Grid cols="80px 1fr" gap="3" as="label">
+						<Flex justify="start" align="center" as="span">Rename</Flex>
 						<Input
 							id="fileName-{id}"
 							name="fileName"
@@ -122,13 +129,25 @@
 							bind:value={newState.fileName}
 							disabled={newState.loading}
 						/>
-					</Flex>
+					</Grid>
+
+					<!-- Preview -->
+					<Separator size="4" />
+					<Grid cols="80px minmax(0, 1fr)" gap="3">
+						<Flex justify="start" align="center" as="span">Preview</Flex>
+						<Panel variant="soft">
+							<Flex align="center" gap="3">
+								<FileCloudIcon class="shrink-0" />
+								<Text weight="medium" style="word-break: break-word;">{newState.pathPreview}</Text>
+							</Flex>
+						</Panel>
+					</Grid>
 				</Flex>
 			</Panel>
 
 			<!-- Submit -->
-			<Flex>
-				<Button size="3" onclick={newState.create}>
+			<Flex justify="end">
+				<Button size="3" variant="soft" color="orange" radius="full" onclick={newState.create}>
 					<PlayIcon weight="fill" />
 					Start download
 				</Button>
@@ -136,10 +155,3 @@
 		{/if}
 	</Flex>
 </PageLayout>
-
-<style>
-	span {
-		min-width: 120px;
-		text-align: right;
-	}
-</style>

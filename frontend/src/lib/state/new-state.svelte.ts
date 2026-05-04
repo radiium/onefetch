@@ -114,7 +114,7 @@ export const createNewState = () => {
 		get directories() {
 			return directories[formState.type] ?? [];
 		},
-		// RullPath
+		// Path preview
 		get pathPreview() {
 			return pathPreview;
 		},
