@@ -43,12 +43,7 @@ export const createSettingsState = () => {
 		},
 		// States
 		get disabled() {
-			return (
-				!form.apiKey1fichier ||
-				!form.apiKeyJellyfin ||
-				(settings?.apiKey1fichier === form.apiKey1fichier &&
-					settings?.apiKeyJellyfin === form.apiKeyJellyfin)
-			);
+			return false;
 		},
 		get loading() {
 			return getState.loading || updateState.loading;
