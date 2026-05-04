@@ -3,6 +3,7 @@ import { useAsyncState } from '$lib/api/use-async-state.svelte';
 import type { Settings } from '$lib/types/types';
 
 export const createSettingsState = () => {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let settings = $state<Settings | null>(null);
 	let form = $state<Partial<Settings>>({
 		apiKey1fichier: '',
